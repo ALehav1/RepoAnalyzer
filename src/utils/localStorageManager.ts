@@ -14,7 +14,7 @@ export function loadSavedRepos(): SavedRepo[] {
       ...repo,
       fileStructure: repo.fileStructure.map((file: any) => ({
         ...file,
-        content: file.content || undefined
+        content: file.content || 'Loading...'
       })),
       fileExplanations: repo.fileExplanations || {},
       chatMessages: repo.chatMessages || []
@@ -31,17 +31,32 @@ export function saveRepo(repo: SavedRepo): void {
     const existingIndex = savedRepos.findIndex(r => r.url === repo.url);
     
     if (existingIndex !== -1) {
-      // Merge with existing data to preserve file contents
+      // Merge with existing data
+      const existingRepo = savedRepos[existingIndex];
       savedRepos[existingIndex] = {
-        ...savedRepos[existingIndex],
+        ...existingRepo,
+        ...repo,
+        fileStructure: repo.fileStructure.map(file => {
+          const existingFile = existingRepo.fileStructure.find(f => f.path === file.path);
+          return {
+            ...file,
+            // Keep existing content if we have it and new content is Loading or undefined
+            content: (file.content && file.content !== 'Loading...') ? file.content : existingFile?.content || 'Loading...'
+          };
+        }),
+        fileExplanations: {
+          ...existingRepo.fileExplanations,
+          ...repo.fileExplanations
+        }
+      };
+    } else {
+      savedRepos.push({
         ...repo,
         fileStructure: repo.fileStructure.map(file => ({
           ...file,
-          content: file.content || savedRepos[existingIndex].fileStructure.find(f => f.path === file.path)?.content
+          content: file.content || 'Loading...'
         }))
-      };
-    } else {
-      savedRepos.push(repo);
+      });
     }
     
     localStorage.setItem(STORAGE_KEYS.SAVED_REPOS, JSON.stringify(savedRepos));

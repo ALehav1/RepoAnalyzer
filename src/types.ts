@@ -6,6 +6,20 @@ export interface FileStructure {
   children?: FileStructure[];
 }
 
+export interface AnalysisState {
+  name: string;
+  description: string | null;
+  stars: number;
+  forks: number;
+  languages: string[];
+  readme: string;
+  aiAnalysis: string;
+  criticalAnalysis: string;
+  createdAt?: string;
+  updatedAt?: string;
+  license?: string;
+}
+
 export interface RepoContentState {
   content: string;
   generatedAt: string;
@@ -24,12 +38,12 @@ export interface SavedPattern {
 export interface SavedRepo {
   url: string;
   name: string;
-  savedAt: string;
   analysis: AnalysisState;
   fileStructure: FileStructure[];
   fileExplanations: Record<string, string>;
+  chatMessages: ChatMessage[];
+  savedAt: string;
   fullRepoContent?: RepoContentState;
-  chatMessages?: ChatMessage[];
 }
 
 export interface ChatMessage {
