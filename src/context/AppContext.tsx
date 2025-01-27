@@ -261,29 +261,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const loadSavedRepo = useCallback(async (savedRepo: SavedRepo) => {
-    try {
-      setUrl(savedRepo.url);
-      setAnalysis(savedRepo.analysis);
-      setFileStructure(savedRepo.fileStructure);
-      setFileExplanations(savedRepo.fileExplanations || {});
-      setChatMessages(savedRepo.chatMessages || []);
-      setSelectedFile(null);
-      setError('');
-      
-      // Load full repo content if it exists
-      if (savedRepo.fullRepoContent) {
-        setFullRepoContent(prev => ({
-          ...prev,
-          [savedRepo.url]: savedRepo.fullRepoContent
-        }));
-      }
-    } catch (err) {
-      console.error('Error loading saved repo:', err);
-      setError('Failed to load repository contents');
-    }
-  }, []);
-
   const handleSave = useCallback(() => {
     // Don't save if we're still loading or analyzing
     if (!url || !analysis || loading || analyzing || isSavingRef.current || loadingFromStorageRef.current) return;
@@ -581,22 +558,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const chatWithRepo = useCallback(async (message: string) => {
     if (!analysis || chatLoading) return;
+
     setChatLoading(true);
-    setChatMessages(prev => [...prev, { role: 'user', content: message }]);
+    const repoContext = {
+      name: analysis.name,
+      description: analysis.description || '',
+    };
+
+    // Add user message to chat
+    setChatMessages(prev => [...prev, {
+      role: 'user',
+      content: message
+    }]);
 
     try {
       const openai = getOpenAIClient();
-      
-      const repoContext = {
-        name: analysis.name,
-        description: analysis.description,
-        readme: analysis.readme,
-        fileStructure: JSON.stringify(fileStructure),
-        fileExplanations,
-        aiAnalysis: analysis.aiAnalysis,
-        criticalAnalysis: analysis.criticalAnalysis
-      };
-
       const completion = await openai.chat.completions.create({
         model: "gpt-4",
         messages: [
@@ -636,10 +612,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       const response = completion.choices[0].message.content || 'I apologize, but I was unable to generate a response.';
       
-      setChatMessages(prev => [...prev, {
-        role: 'assistant',
-        content: response
-      }]);
+      // Add assistant response to chat
+      const updatedMessages = [...chatMessages, 
+        { role: 'user', content: message },
+        { role: 'assistant', content: response }
+      ];
+      setChatMessages(updatedMessages);
+
+      // Save the chat after response is generated
+      const savedRepo = savedRepos.find(repo => repo.url === url);
+      if (savedRepo) {
+        const updatedRepo = {
+          ...savedRepo,
+          chatMessages: updatedMessages
+        };
+        saveRepo(updatedRepo);
+        setSavedRepos(loadSavedRepos());
+      }
     } catch (err) {
       const errorMessage = handleOpenAIError(err);
       setChatMessages(prev => [...prev, {
@@ -649,7 +638,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setChatLoading(false);
     }
-  }, [analysis, fileStructure, fileExplanations, chatMessages, chatLoading]);
+  }, [analysis, fileStructure, fileExplanations, chatMessages, chatLoading, savedRepos, url]);
 
   const deleteSavedRepo = useCallback((repoUrl: string) => {
     deleteRepo(repoUrl);
@@ -711,6 +700,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       throw error;
     }
   }, [url]);
+
+  const loadSavedRepo = useCallback(async (savedRepo: SavedRepo) => {
+    try {
+      setUrl(savedRepo.url);
+      setAnalysis(savedRepo.analysis);
+      setFileStructure(savedRepo.fileStructure);
+      setFileExplanations(savedRepo.fileExplanations || {});
+      setSelectedFile(null);
+      setChatMessages(savedRepo.chatMessages || []);
+      setError('');
+      
+      // Load full repo content if it exists
+      if (savedRepo.fullRepoContent) {
+        setFullRepoContent(prev => ({
+          ...prev,
+          [savedRepo.url]: savedRepo.fullRepoContent
+        }));
+      }
+    } catch (err) {
+      console.error('Error loading saved repo:', err);
+      setError('Failed to load repository contents');
+    }
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {

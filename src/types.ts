@@ -24,12 +24,12 @@ export interface SavedPattern {
 export interface SavedRepo {
   url: string;
   name: string;
+  savedAt: string;
   analysis: AnalysisState;
   fileStructure: FileStructure[];
   fileExplanations: Record<string, string>;
-  chatMessages: ChatMessage[];
-  savedAt: string;
   fullRepoContent?: RepoContentState;
+  chatMessages?: ChatMessage[];
 }
 
 export interface ChatMessage {

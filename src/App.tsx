@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useCallback } from 'react';
+import React, { useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { GithubIcon, GitBranch, AlertCircle, Loader2, MessageSquare,
   FileCode, FolderTree, BookOpen, Copy, Trash2, Clock, BookmarkIcon,
   Send, RefreshCw, X, Search, CheckCircle2 } from 'lucide-react';
@@ -9,6 +9,7 @@ import { ChatMessage } from './components/ChatMessage';
 import { ChatInput } from './components/ChatInput';
 import { ExportImport } from './components/ExportImport';
 import { Settings } from './components/Settings';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { loadSavedRepos } from './utils/localStorageManager';
 
 function App() {
@@ -242,10 +243,18 @@ function App() {
   }, [loading, error, url, selectedFile, fullRepoContent, getAllFilesContent, copyToClipboard, copied]);
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
-      <div className={`fixed inset-y-0 left-0 z-50 bg-white w-96 border-r border-gray-200 transform transition-transform duration-300 ease-in-out ${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      } lg:translate-x-0 lg:static flex flex-col`}>
+    <div className="min-h-screen bg-gray-50 flex">
+      <div
+        className={`fixed inset-0 bg-gray-600 bg-opacity-75 transition-opacity ${
+          sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setSidebarOpen(false)}
+      />
+      <div
+        className={`fixed inset-y-0 left-0 w-96 bg-white shadow-xl transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         <div className="p-4 border-b border-gray-200">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Repository Analysis</h2>
@@ -281,31 +290,34 @@ function App() {
           ) : (
             <div className="divide-y divide-gray-200">
               {filteredRepos.map((repo) => (
-                <div key={repo.url} className="p-4 hover:bg-gray-50">
-                  <div className="flex justify-between items-start mb-2">
-                    <button
-                      onClick={() => {
-                        loadSavedRepo(repo);
-                        setSidebarOpen(false);
-                      }}
-                      className="text-left group flex-1 mr-2"
-                    >
-                      <h3 className="font-medium text-gray-900 group-hover:text-blue-600 truncate">
-                        {repo.name}
-                      </h3>
+                <div
+                  key={repo.url}
+                  onClick={() => {
+                    loadSavedRepo(repo);
+                    setSidebarOpen(false);
+                  }}
+                  className="p-4 border rounded-lg hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+                >
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <h3 className="font-medium text-gray-900">{repo.name}</h3>
                       <p className="text-sm text-gray-500 truncate">{repo.url}</p>
-                    </button>
-                    <button
-                      onClick={() => deleteSavedRepo(repo.url)}
-                      className="text-gray-400 hover:text-red-600 flex-shrink-0"
-                      title="Delete repository"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <div className="flex items-center text-xs text-gray-500">
-                    <Clock className="w-3 h-3 mr-1" />
-                    {new Date(repo.savedAt).toLocaleDateString()}
+                      <p className="text-xs text-gray-400 mt-1">
+                        Saved: {new Date(repo.savedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteSavedRepo(repo.url);
+                        }}
+                        className="p-1 hover:bg-gray-200 rounded text-red-500"
+                        title="Delete Repository"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -323,7 +335,7 @@ function App() {
                 <h1 className="text-2xl font-bold text-gray-900">GitHub Repository Analyzer</h1>
               </div>
               <button
-                onClick={toggleSidebar}
+                onClick={() => setSidebarOpen(!sidebarOpen)}
                 className={`flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md ${
                   sidebarOpen ? 'bg-gray-100' : ''
                 }`}
