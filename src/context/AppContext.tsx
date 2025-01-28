@@ -4,6 +4,9 @@ import { AnalysisState, FileStructure, SavedRepo, ChatMessage, RepoContentState 
 import { loadSavedRepos, saveRepo, deleteRepo } from '../utils/localStorageManager';
 import { SaveIndicator } from '../components/SaveIndicator';
 import { getOpenAIClient, handleOpenAIError } from '../utils/openai';
+import { apiClient } from '../api/client';
+import { AnalysisResponse, SearchResponse } from '../api/types';
+import { useAnalysisStream } from '../hooks/useAnalysisStream';
 
 interface AppContextState {
   url: string;
@@ -32,6 +35,10 @@ interface AppContextState {
   fileSizeLimit: number;
   setFileSizeLimit: (limit: number) => void;
   loadLargeFile: (path: string) => Promise<string>;
+  searchCode: (query: string) => Promise<void>;
+  getBestPractices: () => Promise<void>;
+  analysisUpdates: any[];
+  analysisProgress: number;
 }
 
 export const AppContext = createContext<AppContextState>({} as AppContextState);
@@ -587,10 +594,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             Answer questions about the repository's:
             - Architecture and design patterns
             - Code organization and structure
-            - Implementation details
-            - Best practices and patterns used
-            - Potential improvements
-            - Technical decisions and trade-offs
+            5. Implementation details
+            6. Best practices and patterns used
+            7. Potential improvements
+            8. Technical decisions and trade-offs
             
             Be specific and reference actual files/code when relevant.`
           },
@@ -683,101 +690,77 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [url]);
 
+  const { updates, progress, error: streamError, isComplete, connect: connectToStream } = useAnalysisStream();
+
   const analyzeRepo = useCallback(async () => {
-    if (!url.trim()) {
+    if (!url) {
       setError('Please enter a GitHub repository URL');
       return;
     }
 
-    // Validate GitHub URL format
-    if (!url.match(/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+$/)) {
-      setError('Please enter a valid GitHub repository URL (e.g., https://github.com/owner/repo)');
-      return;
-    }
-
     setLoading(true);
-    setAnalyzing(true);
     setError('');
-    setAnalysis(null);
-    setFileStructure([]);
-    setFileExplanations({});
-    setSelectedFile(null);
-    setChatMessages([]);
+    setAnalyzing(true);
 
     try {
-      const { owner, repo } = parseGithubUrl(url);
-      console.log('Analyzing repo:', owner, repo);
-      
-      // First validate that the repository exists and is accessible
-      const repoData = await octokit.rest.repos.get({ owner, repo }).catch(err => {
-        if (err.status === 403) {
-          throw new Error('GitHub API rate limit exceeded. Please add a GitHub token in your .env file.');
-        }
-        if (err.status === 404) {
-          throw new Error('Repository not found. Please check the URL and try again.');
-        }
-        throw err;
-      });
-      
-      // Get repository metadata
-      const [languages, readme] = await Promise.all([
-        octokit.rest.repos.listLanguages({ owner, repo }),
-        octokit.rest.repos.getReadme({ 
-          owner, 
-          repo,
-          mediaType: {
-            format: 'raw',
-          }
-        }).catch(() => null)
-      ]);
+      // Connect to SSE stream
+      connectToStream();
 
-      // Build file structure first
-      console.log('Building file structure...');
-      const structure = await buildFileStructure(owner, repo);
-      console.log('File structure built:', structure);
-      setFileStructure(structure);
+      // Start analysis
+      const response = await apiClient.analyzeRepo(url);
+      
+      if (response.status === 'success') {
+        // Update will come through SSE
+        console.log('Analysis started successfully');
+      }
+    } catch (err) {
+      console.error('Error starting analysis:', err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+    }
+  }, [url, connectToStream]);
 
-      // Set initial analysis state
-      const initialAnalysis = {
-        name: repoData.data.name,
-        description: repoData.data.description,
-        stars: repoData.data.stargazers_count,
-        forks: repoData.data.forks_count,
-        languages: Object.keys(languages.data),
-        readme: readme?.data || '',
-        aiAnalysis: 'Analysis will be generated after file loading completes.',
-        criticalAnalysis: 'Critical analysis will be generated on request.'
-      };
-      
-      setAnalysis(initialAnalysis);
-      
-      // Now that we have confirmed it's a valid repo and have all initial data,
-      // manually trigger a save
-      const initialRepo: SavedRepo = {
-        url,
-        name: initialAnalysis.name,
-        analysis: initialAnalysis,
-        fileStructure: structure,
-        fileExplanations: {},
-        chatMessages: [],
-        savedAt: new Date().toISOString(),
-        fullRepoContent: fullRepoContent[url]
-      };
-      
-      // Save immediately without debouncing
-      saveRepo(initialRepo);
-      setSavedRepos(loadSavedRepos());
-      setShowSaveIndicator(true);
-      setTimeout(() => setShowSaveIndicator(false), 2000);
+  // Update error state when stream error occurs
+  useEffect(() => {
+    if (streamError) {
+      setError(streamError);
+    }
+  }, [streamError]);
 
-    } catch (err: any) {
-      console.error('Analysis error:', err);
-      setError(err.message || 'Failed to analyze repository');
-    } finally {
+  // Update loading state when analysis completes
+  useEffect(() => {
+    if (isComplete) {
       setLoading(false);
       setAnalyzing(false);
     }
-  }, [url, buildFileStructure, fullRepoContent]);
+  }, [isComplete]);
+
+  const searchCode = useCallback(async (query: string) => {
+    if (!query) return;
+    
+    setLoading(true);
+    try {
+      const results = await apiClient.search(query);
+      // Update UI with search results
+      // This will depend on how you want to display the results
+      console.log('Search results:', results);
+    } catch (err) {
+      console.error('Error searching code:', err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const getBestPractices = useCallback(async () => {
+    try {
+      const practices = await apiClient.getBestPractices();
+      // Update UI with best practices
+      console.log('Best practices:', practices);
+    } catch (err) {
+      console.error('Error getting best practices:', err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+    }
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -790,34 +773,40 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <AppContext.Provider value={{
-        url,
-        setUrl,
-        analysis,
-        fileStructure,
-        fileExplanations,
-        fullRepoContent,
-        loading,
-        analyzing,
-        error,
-        selectedFile,
-        savedRepos,
-        analyzeRepo,
-        selectFile,
-        reanalyzeFile,
-        loadSavedRepo,
-        deleteSavedRepo,
-        clearAnalysis,
-        generateCriticalAnalysis,
-        chatWithRepo,
-        chatMessages,
-        chatLoading,
-        setSavedRepos,
-        generateFullRepoContent,
-        fileSizeLimit,
-        setFileSizeLimit,
-        loadLargeFile,
-      }}>
+      <AppContext.Provider
+        value={{
+          url,
+          setUrl,
+          analysis,
+          fileStructure,
+          fileExplanations,
+          fullRepoContent,
+          loading,
+          analyzing,
+          error,
+          selectedFile,
+          savedRepos,
+          analyzeRepo,
+          selectFile,
+          reanalyzeFile,
+          loadSavedRepo,
+          deleteSavedRepo,
+          clearAnalysis,
+          generateCriticalAnalysis,
+          chatWithRepo,
+          chatMessages,
+          chatLoading,
+          setSavedRepos,
+          generateFullRepoContent,
+          fileSizeLimit,
+          setFileSizeLimit,
+          loadLargeFile,
+          searchCode,
+          getBestPractices,
+          analysisUpdates: updates,
+          analysisProgress: progress,
+        }}
+      >
         {children}
       </AppContext.Provider>
       <SaveIndicator show={showSaveIndicator} />

@@ -161,24 +161,120 @@ VITE_GITHUB_TOKEN=your_github_token_here
 - Reduced API calls
 - Better user experience
 
-### 6. Future Improvements
+### 6. Testing and Quality Assurance
 
-1. **Performance**
-   - Implement virtual scrolling for large files
-   - Add worker threads for heavy computations
-   - Optimize state updates
+#### Testing Framework
+- **Jest & React Testing Library**: Comprehensive testing setup for components and utilities
+- **Test Coverage**: Automated coverage reporting
+- **Test Scripts**:
+  ```bash
+  npm run test           # Run all tests
+  npm run test:watch    # Run tests in watch mode
+  npm run test:coverage # Generate coverage report
+  ```
 
-2. **Features**
-   - Add diff view for file changes
-   - Implement repository comparison
-   - Add code search functionality
-   - Support for private repositories
+### 7. Code Quality Tools
 
-3. **Analysis**
-   - Add more detailed code pattern detection
-   - Implement security vulnerability scanning
-   - Add performance analysis
-   - Support more file types
+#### Linting and Formatting
+- **ESLint**: JavaScript and TypeScript linting with React-specific rules
+- **Prettier**: Consistent code formatting
+- **Scripts**:
+  ```bash
+  npm run lint      # Check for linting issues
+  npm run lint:fix  # Fix linting issues
+  npm run format    # Format code with Prettier
+  ```
+
+#### Git Hooks
+- **Husky**: Pre-commit hooks for code quality
+- **lint-staged**: Run linters on staged files
+- Automatic formatting and linting before commits
+
+### 8. API Documentation
+
+#### OpenAPI/Swagger
+- **Endpoint Documentation**: Comprehensive API documentation
+- **Response Types**: Detailed response schemas
+- **Error Handling**: Documentation for error responses
+- Access the API documentation at `/docs` when running the backend
+
+### 9. Security
+
+#### CORS Configuration
+- Environment-based CORS settings
+- Restricted HTTP methods and headers
+- Preflight request caching
+- Production URL configuration
+
+## 🚀 Getting Started
+
+1. Clone the repository
+```bash
+git clone https://github.com/yourusername/repo-analyzer.git
+cd repo-analyzer
+```
+
+2. Install dependencies
+```bash
+npm install
+```
+
+3. Set up environment variables
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
+
+4. Start the development server
+```bash
+npm run dev
+```
+
+5. Run tests
+```bash
+npm run test
+```
+
+6. Access the application
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- API Documentation: http://localhost:8000/docs
+
+## 💻 Development
+
+### Code Quality
+
+1. Format code:
+```bash
+npm run format
+```
+
+2. Lint code:
+```bash
+npm run lint
+```
+
+3. Fix linting issues:
+```bash
+npm run lint:fix
+```
+
+### Testing
+
+1. Run all tests:
+```bash
+npm run test
+```
+
+2. Watch mode for development:
+```bash
+npm run test:watch
+```
+
+3. Generate coverage report:
+```bash
+npm run test:coverage
+```
 
 ## Contributing
 

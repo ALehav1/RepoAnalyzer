@@ -4,6 +4,28 @@ export interface FileStructure {
   type: 'file' | 'dir';
   content?: string;
   children?: FileStructure[];
+  size?: number;
+}
+
+export interface FileContent {
+  content: string;
+  metadata: {
+    path: string;
+    size: number;
+    type: string;
+    language: string;
+  };
+}
+
+export interface CodeExample {
+  title: string;
+  code: string;
+  language: string;
+  highlightLines?: number[];
+  explanation?: string;
+  path?: string;
+  startLine?: number;
+  endLine?: number;
 }
 
 export interface AnalysisState {
@@ -18,6 +40,9 @@ export interface AnalysisState {
   createdAt?: string;
   updatedAt?: string;
   license?: string;
+  fileContent?: FileContent;
+  codeExamples?: CodeExample[];
+  bestPractices?: CodeExample[];
 }
 
 export interface RepoContentState {

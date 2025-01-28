@@ -1,12 +1,53 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useContext } from 'react';
 import { Code2, GitFork, BookOpen, Save, X, Library, Settings, Package, Database, Layout } from 'lucide-react';
 import { SavedRepo, SavedPattern } from '../types';
 import { savePattern, loadSavedPatterns, deletePattern } from '../utils/patternManager';
 import { SavedPatterns } from './SavedPatterns';
+import { AppContext } from '../context/AppContext';
+import { AnalysisProgress } from './AnalysisProgress';
+import { CodeBlock } from './CodeBlock';
+import { LoadingSpinner } from './LoadingSpinner';
+import { getFileExtension } from '../utils/fileUtils';
 
 // ... (keep existing interfaces)
 
 export function RepoAnalysis({ savedRepos, onAnalyze }: RepoAnalysisProps) {
+  const { 
+    analysis, 
+    analyzing,
+    analysisUpdates,
+    analysisProgress,
+    error,
+    selectedFile,
+    fileExplanations
+  } = useContext(AppContext);
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+        <h3 className="text-red-800 font-medium mb-2">Error</h3>
+        <p className="text-red-600">{error}</p>
+      </div>
+    );
+  }
+
+  if (!analysis && !analyzing) {
+    return null;
+  }
+
+  if (analyzing) {
+    return (
+      <div className="space-y-4">
+        <LoadingSpinner message="Analyzing repository..." />
+        <AnalysisProgress
+          updates={analysisUpdates}
+          progress={analysisProgress}
+          error={error}
+        />
+      </div>
+    );
+  }
+
   // ... (keep existing state)
 
   // Enhanced pattern extraction
@@ -174,4 +215,104 @@ export function RepoAnalysis({ savedRepos, onAnalyze }: RepoAnalysisProps) {
     }
   ];
 
-  // ... (keep rest of the component implementation)
+  return (
+    <div className="space-y-6">
+      {/* Analysis Results */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold">Analysis Results</h2>
+        
+        {/* Repository Info */}
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium mb-4">Repository Overview</h3>
+          <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Name</dt>
+              <dd className="mt-1">{analysis?.name}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Description</dt>
+              <dd className="mt-1">{analysis?.description || 'No description available'}</dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">Languages</dt>
+              <dd className="mt-1">
+                {analysis?.languages?.join(', ') || 'Not specified'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-sm font-medium text-gray-500">License</dt>
+              <dd className="mt-1">{analysis?.license || 'Not specified'}</dd>
+            </div>
+          </dl>
+        </div>
+
+        {/* Selected File */}
+        {selectedFile && (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h3 className="text-lg font-medium mb-4">Selected File</h3>
+            <div className="space-y-4">
+              {/* File explanation */}
+              {fileExplanations[selectedFile] && (
+                <div className="prose max-w-none mb-4">
+                  <p>{fileExplanations[selectedFile]}</p>
+                </div>
+              )}
+              
+              {/* Code content */}
+              {analysis?.fileContent ? (
+                <CodeBlock
+                  code={analysis.fileContent.content}
+                  language={analysis.fileContent.metadata.language}
+                  fileName={selectedFile}
+                  showLineNumbers={true}
+                />
+              ) : (
+                <LoadingSpinner message="Loading file content..." />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* AI Analysis */}
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium mb-4">AI Analysis</h3>
+          <div className="prose max-w-none">
+            <p>{analysis?.aiAnalysis}</p>
+          </div>
+        </div>
+
+        {/* Critical Analysis */}
+        {analysis?.criticalAnalysis && (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h3 className="text-lg font-medium mb-4">Critical Analysis</h3>
+            <div className="prose max-w-none">
+              <p>{analysis.criticalAnalysis}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Code Examples */}
+        {analysis?.codeExamples && analysis.codeExamples.length > 0 && (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h3 className="text-lg font-medium mb-4">Code Examples</h3>
+            <div className="space-y-4">
+              {analysis.codeExamples.map((example, index) => (
+                <div key={index} className="space-y-2">
+                  <h4 className="font-medium text-gray-700">{example.title}</h4>
+                  <CodeBlock
+                    code={example.code}
+                    language={example.language}
+                    highlightLines={example.highlightLines}
+                  />
+                  {example.explanation && (
+                    <p className="text-sm text-gray-600 mt-2">{example.explanation}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
