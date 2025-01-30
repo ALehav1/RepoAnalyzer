@@ -1,10 +1,10 @@
-import React, { createContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { Octokit } from 'octokit';
-import { AnalysisState, FileStructure, SavedRepo, ChatMessage, RepoContentState } from '../types';
+import { AnalysisState, FileStructure, SavedRepo, ChatMessage, RepoContentState, Repository } from '../types';
 import { loadSavedRepos, saveRepo, deleteRepo } from '../utils/localStorageManager';
 import { SaveIndicator } from '../components/SaveIndicator';
 import { getOpenAIClient, handleOpenAIError } from '../utils/openai';
-import { apiClient } from '../api/client';
+import { listRepos } from '../api/client';
 import { AnalysisResponse, SearchResponse } from '../api/types';
 import { useAnalysisStream } from '../hooks/useAnalysisStream';
 
@@ -39,12 +39,23 @@ interface AppContextState {
   getBestPractices: () => Promise<void>;
   analysisUpdates: any[];
   analysisProgress: number;
+  repositories: Repository[];
+  refreshRepositories: () => Promise<void>;
 }
 
-export const AppContext = createContext<AppContextState>({} as AppContextState);
+interface AppContextType {
+  repositories: Repository[];
+  loading: boolean;
+  error: string | null;
+  refreshRepositories: () => Promise<void>;
+}
 
-const octokit = new Octokit({
-  auth: import.meta.env.VITE_GITHUB_TOKEN
+const AppContext = createContext<AppContextState | undefined>(undefined);
+const AppContext2 = createContext<AppContextType>({
+  repositories: [],
+  loading: false,
+  error: null,
+  refreshRepositories: async () => {}
 });
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
@@ -63,6 +74,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [showSaveIndicator, setShowSaveIndicator] = useState(false);
   const [fullRepoContent, setFullRepoContent] = useState<Record<string, RepoContentState>>({});
   const [fileSizeLimit, setFileSizeLimit] = useState<number>(100000); // Default 100KB
+  const [repositories, setRepositories] = useState<Repository[]>([]);
+  const [refreshLoading, setRefreshLoading] = useState(false);
 
   // Refs
   const saveTimeoutRef = useRef<NodeJS.Timeout>();
@@ -707,7 +720,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       connectToStream();
 
       // Start analysis
-      const response = await apiClient.analyzeRepo(url);
+      const response = await listRepos();
       
       if (response.status === 'success') {
         // Update will come through SSE
@@ -739,7 +752,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     
     setLoading(true);
     try {
-      const results = await apiClient.search(query);
+      const results = await listRepos();
       // Update UI with search results
       // This will depend on how you want to display the results
       console.log('Search results:', results);
@@ -753,12 +766,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const getBestPractices = useCallback(async () => {
     try {
-      const practices = await apiClient.getBestPractices();
+      const practices = await listRepos();
       // Update UI with best practices
       console.log('Best practices:', practices);
     } catch (err) {
       console.error('Error getting best practices:', err);
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+    }
+  }, []);
+
+  const refreshRepositories = useCallback(async () => {
+    setRefreshLoading(true);
+    try {
+      const repos = await listRepos();
+      setRepositories(repos);
+    } catch (err) {
+      console.error('Error fetching repositories:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch repositories');
+    } finally {
+      setRefreshLoading(false);
     }
   }, []);
 
@@ -769,6 +795,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         clearTimeout(saveTimeoutRef.current);
       }
     };
+  }, []);
+
+  const [repositories2, setRepositories2] = useState<Repository[]>([]);
+  const [loading2, setLoading2] = useState(true);
+  const [error2, setError2] = useState<string | null>(null);
+
+  const refreshRepositories2 = async () => {
+    try {
+      setLoading2(true);
+      setError2(null);
+      const repos = await listRepos();
+      setRepositories2(repos);
+    } catch (err) {
+      console.error('Error fetching repositories:', err);
+      setError2(err instanceof Error ? err.message : 'Failed to fetch repositories');
+    } finally {
+      setLoading2(false);
+    }
+  };
+
+  useEffect(() => {
+    refreshRepositories2();
   }, []);
 
   return (
@@ -805,11 +853,31 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           getBestPractices,
           analysisUpdates: updates,
           analysisProgress: progress,
+          repositories,
+          refreshRepositories,
         }}
       >
-        {children}
+        <AppContext2.Provider value={{ repositories: repositories2, loading: loading2, error: error2, refreshRepositories: refreshRepositories2 }}>
+          {children}
+        </AppContext2.Provider>
       </AppContext.Provider>
       <SaveIndicator show={showSaveIndicator} />
     </>
   );
+}
+
+export function useApp() {
+  const context = useContext(AppContext);
+  if (context === undefined) {
+    throw new Error('useApp must be used within an AppProvider');
+  }
+  return context;
+}
+
+export function useApp2() {
+  const context = useContext(AppContext2);
+  if (context === undefined) {
+    throw new Error('useApp2 must be used within an AppProvider');
+  }
+  return context;
 }

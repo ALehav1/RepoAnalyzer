@@ -1,225 +1,191 @@
-import { 
-  AnalysisResponse, 
-  SearchResponse, 
-  BestPracticesResponse,
-  AnalyzeRepoRequest,
-  SearchRequest,
-  ApiError,
-  RetryableError,
-  ErrorCode
-} from './types';
+import { Repository, ChatMessage, BestPractice, AnalysisResponse } from './types'
 
-const API_BASE_URL = 'http://localhost:8001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001/api'
+const MAX_RETRIES = 3
+const RETRY_DELAY = 1000 // 1 second
+const CONNECTION_TIMEOUT = 30000 // 30 seconds
 
-// Default timeout values
-const DEFAULT_TIMEOUT = 30000; // 30 seconds
-const LONG_TIMEOUT = 120000;   // 2 minutes
-const MAX_RETRIES = 3;
-const INITIAL_RETRY_DELAY = 1000; // 1 second
+let isServerAvailable = false
 
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-    public code: ErrorCode = 'UNKNOWN_ERROR',
-    public details?: Record<string, any>,
-    public timestamp: string = new Date().toISOString(),
-    public requestId?: string
-  ) {
-    super(message);
-    this.name = 'ApiError';
-  }
+async function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-export class RetryableError extends ApiError {
-  constructor(
-    message: string,
-    status: number,
-    code: ErrorCode,
-    public retryAfter?: number,
-    public attemptCount: number = 0,
-    public maxAttempts: number = MAX_RETRIES
-  ) {
-    super(message, status, code);
-    this.name = 'RetryableError';
-  }
-}
-
-async function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function isRetryableError(error: Error): error is RetryableError {
-  return error instanceof RetryableError;
-}
-
-function shouldRetry(error: Error, attempt: number): boolean {
-  if (!isRetryableError(error) || attempt >= MAX_RETRIES) {
-    return false;
-  }
-
-  const retryableCodes: ErrorCode[] = [
-    'RATE_LIMIT_EXCEEDED',
-    'SERVICE_UNAVAILABLE',
-    'NETWORK_ERROR',
-    'TIMEOUT'
-  ];
-
-  return retryableCodes.includes(error.code);
-}
-
-async function withRetry<T>(
-  operation: () => Promise<T>,
-  attempt: number = 0
-): Promise<T> {
+export async function checkServerStatus(): Promise<boolean> {
   try {
-    return await operation();
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), CONNECTION_TIMEOUT)
+
+    const response = await fetch(`${API_BASE_URL}/health`, {
+      signal: controller.signal,
+      mode: 'cors',
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    clearTimeout(timeoutId)
+    
+    if (response.ok) {
+      const data = await response.json()
+      isServerAvailable = data.status === 'healthy'
+      return isServerAvailable
+    }
+    
+    isServerAvailable = false
+    return false
   } catch (error) {
-    if (error instanceof Error && shouldRetry(error, attempt)) {
-      const retryError = error as RetryableError;
-      const delay = retryError.retryAfter
-        ? retryError.retryAfter * 1000
-        : Math.min(INITIAL_RETRY_DELAY * Math.pow(2, attempt), 30000);
-
-      console.log(`Retrying after ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
-      await sleep(delay);
-      return withRetry(operation, attempt + 1);
-    }
-    throw error;
+    console.error('Server health check failed:', error)
+    isServerAvailable = false
+    return false
   }
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ 
-      message: 'An unknown error occurred',
-      code: 'UNKNOWN_ERROR' as ErrorCode
-    }));
-
-    const retryAfter = response.headers.get('retry-after');
-    const retryAfterSeconds = retryAfter ? parseInt(retryAfter, 10) : undefined;
-
-    switch (response.status) {
-      case 429:
-        throw new RetryableError(
-          'Rate limit exceeded',
-          response.status,
-          'RATE_LIMIT_EXCEEDED',
-          retryAfterSeconds
-        );
-      case 401:
-        throw new ApiError('Unauthorized', response.status, 'UNAUTHORIZED');
-      case 403:
-        throw new ApiError('Forbidden', response.status, 'FORBIDDEN');
-      case 404:
-        throw new ApiError('Not found', response.status, 'NOT_FOUND');
-      case 422:
-        throw new ApiError('Validation error', response.status, 'VALIDATION_ERROR', error.details);
-      case 500:
-        throw new ApiError('Internal server error', response.status, 'INTERNAL_SERVER_ERROR');
-      case 503:
-        throw new RetryableError(
-          'Service unavailable',
-          response.status,
-          'SERVICE_UNAVAILABLE',
-          retryAfterSeconds
-        );
-      default:
-        throw new ApiError(error.message, response.status, error.code);
+async function request<T>(endpoint: string, options: RequestInit = {}, retries = MAX_RETRIES): Promise<T> {
+  if (!isServerAvailable && endpoint !== '/health') {
+    console.log('Server status unknown, checking health...')
+    const serverUp = await checkServerStatus()
+    if (!serverUp) {
+      throw new Error('Server is not available. Please try again later.')
     }
   }
 
-  return response.json();
-}
+  try {
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), CONNECTION_TIMEOUT)
 
-async function withTimeout<T>(
-  promise: Promise<T>,
-  timeoutMs: number = DEFAULT_TIMEOUT
-): Promise<T> {
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => {
-      reject(new RetryableError('Request timed out', 408, 'TIMEOUT'));
-    }, timeoutMs);
-  });
-
-  return Promise.race([promise, timeoutPromise]);
-}
-
-export class ApiClient {
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {},
-    timeoutMs: number = DEFAULT_TIMEOUT
-  ): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const headers = {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    };
-
-    const config: RequestInit = {
+    const requestOptions: RequestInit = {
       ...options,
-      headers,
-    };
-
-    return withRetry(() =>
-      withTimeout(
-        fetch(url, config).then(response => handleResponse<T>(response)),
-        timeoutMs
-      )
-    );
-  }
-
-  async analyzeRepo(request: AnalyzeRepoRequest): Promise<AnalysisResponse> {
-    return this.request<AnalysisResponse>(
-      '/analyze-repo',
-      {
-        method: 'POST',
-        body: JSON.stringify(request),
+      signal: controller.signal,
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...options.headers,
       },
-      LONG_TIMEOUT
-    );
-  }
+    }
 
-  async search(request: SearchRequest): Promise<SearchResponse> {
-    return this.request<SearchResponse>('/search-code', {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
-  }
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, requestOptions)
+    clearTimeout(timeoutId)
 
-  async getBestPractices(): Promise<BestPracticesResponse> {
-    return this.request<BestPracticesResponse>('/get-best-practices');
-  }
+    const contentType = response.headers.get('content-type')
 
-  async listRepos(): Promise<{ repos: { repo_url: string; last_analyzed: string }[] }> {
-    return this.request('/list-repos');
-  }
+    if (!response.ok) {
+      let errorMessage = 'API request failed'
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.detail || errorData.message || errorMessage
+        } catch (parseError) {
+          console.error('Error parsing error response:', parseError)
+          errorMessage = response.statusText || errorMessage
+        }
+      } else {
+        errorMessage = response.statusText || errorMessage
+      }
+      throw new Error(errorMessage)
+    }
 
-  async refreshRepo(request: { repo_url: string }): Promise<void> {
-    return this.request('/refresh-repo', {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
-  }
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json()
+    }
 
-  async deleteRepo(request: { repo_url: string }): Promise<void> {
-    return this.request('/delete-repo', {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
-  }
+    throw new Error('Invalid response format: expected application/json')
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('Request timed out. Please try again.')
+    }
 
-  async chat(request: { message: string; repo_urls?: string[] }): Promise<{ answer: string }> {
-    return this.request('/chat', {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
+    if (retries > 0 && (error instanceof TypeError || error.message.includes('failed to fetch'))) {
+      console.log(`Retrying request to ${endpoint}. ${retries} retries left.`)
+      await sleep(RETRY_DELAY)
+      return request<T>(endpoint, options, retries - 1)
+    }
+
+    throw error
   }
 }
 
-// Export a singleton instance
-export const apiClient = new ApiClient();
+// Repository endpoints
+export async function processRepo(url: string): Promise<Repository> {
+  console.log('Processing repository:', url)
+  return request<Repository>('/api/repositories/process-repo', {
+    method: 'POST',
+    body: JSON.stringify({ url }),
+  })
+}
 
-// Also export the class for testing purposes
-export { ApiClient as ApiClientClass };
+export async function getRepo(id: string): Promise<Repository> {
+  console.log('Getting repository:', id)
+  return request<Repository>(`/api/repositories/${id}`)
+}
+
+export async function listRepos(): Promise<Repository[]> {
+  console.log('Listing repositories...')
+  return request<Repository[]>('/api/repositories')
+}
+
+export async function refreshRepo(id: string): Promise<Repository> {
+  console.log('Refreshing repository:', id)
+  return request<Repository>(`/api/repositories/${id}/refresh`, {
+    method: 'POST',
+  })
+}
+
+export async function deleteRepo(id: string): Promise<void> {
+  console.log('Deleting repository:', id)
+  return request<void>(`/api/repositories/${id}`, {
+    method: 'DELETE',
+  })
+}
+
+export async function analyzeRepo(id: string): Promise<AnalysisResponse> {
+  console.log('Analyzing repository:', id)
+  return request<AnalysisResponse>(`/api/repositories/${id}/analyze`, {
+    method: 'POST',
+  })
+}
+
+// Chat endpoints
+export async function createChatMessage(repoId: string, content: string): Promise<ChatMessage> {
+  console.log('Creating chat message in repository:', repoId)
+  return request<ChatMessage>(`/api/repositories/${repoId}/chat`, {
+    method: 'POST',
+    body: JSON.stringify({ content }),
+  })
+}
+
+export async function getChatHistory(repoId: string): Promise<ChatMessage[]> {
+  console.log('Getting chat history for repository:', repoId)
+  return request<ChatMessage[]>(`/api/repositories/${repoId}/chat`)
+}
+
+export async function createGlobalChatMessage(content: string, repoIds: string[]): Promise<ChatMessage> {
+  console.log('Creating global chat message...')
+  return request<ChatMessage>('/api/chat', {
+    method: 'POST',
+    body: JSON.stringify({ content, repository_ids: repoIds }),
+  })
+}
+
+export async function getGlobalChatHistory(): Promise<ChatMessage[]> {
+  console.log('Getting global chat history...')
+  return request<ChatMessage[]>('/api/chat')
+}
+
+// Best Practices endpoints
+export async function getRepoPractices(repoId: string): Promise<BestPractice[]> {
+  console.log('Getting best practices for repository:', repoId)
+  return request<BestPractice[]>(`/api/repositories/${repoId}/practices`)
+}
+
+export async function getGlobalPractices(category?: string): Promise<BestPractice[]> {
+  console.log('Getting global best practices...')
+  return request<BestPractice[]>(category ? `/api/practices?category=${category}` : '/api/practices')
+}
+
+export async function markPracticeGeneralizable(practiceId: string): Promise<BestPractice> {
+  console.log('Marking practice as generalizable:', practiceId)
+  return request<BestPractice>(`/api/practices/${practiceId}/generalize`, {
+    method: 'POST',
+  })
+}

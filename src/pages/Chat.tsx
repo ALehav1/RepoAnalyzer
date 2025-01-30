@@ -1,14 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
 import { useToast } from '../components/ui/use-toast';
 import { Loader2, Send, ChevronDown } from 'lucide-react';
-import { ChatMessage } from '../components/chat/ChatMessage';
+import { createChatMessage, getChatHistory } from '../api/client';
+import type { ChatMessage } from '../api/types';
 import { RepoSelector } from '../components/chat/RepoSelector';
 import { ScrollArea } from '../components/ui/scroll-area';
-import { apiClient } from '../api/client';
 
 interface Repo {
   repo_url: string;
@@ -36,7 +36,7 @@ export default function Chat() {
   useEffect(() => {
     async function fetchRepos() {
       try {
-        const data = await apiClient.listRepos();
+        const data = await getChatHistory(selectedRepos[0]);
         setAllRepos(data.repos || []);
         
         // Handle repo from URL parameter
@@ -102,10 +102,10 @@ export default function Chat() {
     setQuery('');
 
     try {
-      const response = await apiClient.chat({ message: query, repo_urls: selectedRepos });
+      const response = await createChatMessage(selectedRepos[0], query);
       const assistantMessage: Message = {
         role: 'assistant',
-        content: response.answer,
+        content: response.response,
         timestamp: new Date().toISOString(),
       };
       setMessages(prev => [...prev, assistantMessage]);
@@ -219,12 +219,12 @@ export default function Chat() {
               <ScrollArea className="h-[500px] pr-4 mb-4">
                 <div className="space-y-4">
                   {messages.map((message, index) => (
-                    <ChatMessage
-                      key={index}
-                      role={message.role}
-                      content={message.content}
-                      timestamp={message.timestamp}
-                    />
+                    <div key={index} className="space-y-2">
+                      <div className="bg-muted p-3 rounded-lg">
+                        <p className="font-medium">{message.role === 'user' ? 'You' : 'AI'}</p>
+                        <p>{message.content}</p>
+                      </div>
+                    </div>
                   ))}
                   <div ref={messagesEndRef} />
                 </div>

@@ -1,201 +1,154 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Button } from '../components/ui/button';
-import { useToast } from '../components/ui/use-toast';
-import { Loader2, GitBranch, ArrowRight } from 'lucide-react';
-import { apiClient } from '../api/client';
-
-interface RecentRepo {
-  url: string;
-  name: string;
-  analyzedAt: string;
-}
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Button } from '../components/ui/button'
+import { Input } from '../components/ui/input'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
+import { useToast } from '../components/ui/use-toast'
+import { Loader2, GitBranch } from 'lucide-react'
+import { Progress } from '../components/ui/progress'
+import { processRepo } from '../api/client'
+import { useRepo } from '../context/RepoContext'
+import type { Repository } from '../api/types'
 
 export default function LoadRepo() {
-  const [repoUrl, setRepoUrl] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [recentRepos, setRecentRepos] = useState<RecentRepo[]>([]);
-  const [progress, setProgress] = useState(0);
-  const progressIntervalRef = useRef<NodeJS.Timeout>();
-  const { toast } = useToast();
-  const navigate = useNavigate();
+  const [url, setUrl] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [repository, setRepository] = useState<Repository | null>(null)
+  const navigate = useNavigate()
+  const { toast } = useToast()
+  const { refreshRepositories, pollRepository, repositories } = useRepo()
 
+  // Watch for repository status changes
   useEffect(() => {
-    // Load recent repos from localStorage
-    const savedRepos = localStorage.getItem('recentRepos');
-    if (savedRepos) {
-      setRecentRepos(JSON.parse(savedRepos));
-    }
-  }, []);
-
-  function formatGithubUrl(url: string): string {
-    try {
-      // Handle various GitHub URL formats
-      const urlPattern = /(?:https?:\/\/)?(?:www\.)?github\.com\/([^\/]+)\/([^\/]+)/i;
-      const shortPattern = /^([^\/]+)\/([^\/]+)$/;
-      
-      let match = url.match(urlPattern) || url.match(shortPattern);
-      if (!match) {
-        throw new Error('Invalid GitHub repository URL format');
+    if (repository) {
+      const updatedRepo = repositories.find(r => r.id === repository.id)
+      if (updatedRepo) {
+        setRepository(updatedRepo)
+        
+        // Navigate when analysis is complete
+        if (updatedRepo.analysis_status === 'completed') {
+          toast({
+            title: 'Success',
+            description: 'Repository analysis completed successfully',
+          })
+          navigate(`/repos/${updatedRepo.id}`)
+        }
+        
+        // Handle failed analysis
+        if (updatedRepo.analysis_status === 'failed') {
+          toast({
+            title: 'Error',
+            description: 'Repository analysis failed',
+            variant: 'destructive',
+          })
+          setLoading(false)
+          setRepository(null)
+        }
       }
+    }
+  }, [repositories, repository, navigate, toast])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (!url) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a GitHub repository URL',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    try {
+      setLoading(true)
+      const repo = await processRepo(url)
+      setRepository(repo)
       
-      const [, owner, repo] = match;
-      return `https://github.com/${owner}/${repo.replace('.git', '')}`;
-    } catch (e) {
-      throw new Error('Please enter a valid GitHub repository URL');
+      // Start polling the repository
+      pollRepository(repo.id)
+      
+      toast({
+        title: 'Repository Added',
+        description: 'Starting repository analysis...',
+      })
+    } catch (error) {
+      console.error('Error loading repository:', error)
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to load repository',
+        variant: 'destructive',
+      })
+      setLoading(false)
     }
   }
 
-  async function handleSingleUpload(e: React.FormEvent) {
-    e.preventDefault();
-    setIsLoading(true);
-    setProgress(0);
-
-    try {
-      const formattedUrl = formatGithubUrl(repoUrl);
-      
-      // Start progress animation
-      progressIntervalRef.current = setInterval(() => {
-        setProgress(p => Math.min(p + Math.random() * 20, 90));
-      }, 500);
-
-      const response = await apiClient.analyzeRepo({ url: formattedUrl });
-
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-      setProgress(100);
-
-      // Update recent repos
-      const newRepo = {
-        url: formattedUrl,
-        name: formattedUrl.split('/').pop() || '',
-        analyzedAt: new Date().toISOString()
-      };
-
-      const updatedRepos = [newRepo, ...recentRepos.filter(r => r.url !== formattedUrl)].slice(0, 5);
-      setRecentRepos(updatedRepos);
-      localStorage.setItem('recentRepos', JSON.stringify(updatedRepos));
-
-      // Show success message
-      toast({
-        title: 'Repository Analyzed',
-        description: 'Successfully analyzed the repository.',
-      });
-
-      // Navigate to the analysis page
-      navigate('/analysis', { state: { analysis: response } });
-    } catch (error: any) {
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-      }
-      setProgress(0);
-      
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to analyze repository',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = undefined;
-      }
-    }
+  const getProgressMessage = () => {
+    if (!repository) return ''
+    const progress = repository.analysis_progress || 0
+    
+    if (progress === 0) return 'Starting analysis...'
+    if (progress <= 20) return 'Cloning repository...'
+    if (progress <= 40) return 'Analyzing structure...'
+    if (progress <= 60) return 'Processing files...'
+    if (progress <= 80) return 'Generating analysis...'
+    if (progress < 100) return 'Extracting best practices...'
+    return 'Analysis complete!'
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-3xl">
-      <Card className="mb-6">
+    <div className="max-w-2xl mx-auto">
+      <Card>
         <CardHeader>
-          <CardTitle>Load a Repository</CardTitle>
+          <CardTitle>Load GitHub Repository</CardTitle>
           <CardDescription>
-            Analyze a GitHub repository to understand its structure, patterns, and best practices.
-            You can paste a GitHub URL or use the format owner/repo.
+            Enter a GitHub repository URL to analyze its code and patterns.
+            We'll scan the repository and provide insights about its structure,
+            patterns, and best practices.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSingleUpload} className="space-y-4">
-            <div className="relative">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
               <Input
                 type="text"
-                value={repoUrl}
-                onChange={(e) => setRepoUrl(e.target.value)}
-                placeholder="e.g., github.com/user/repo or user/repo"
-                className="pr-24"
-                disabled={isLoading}
+                placeholder="https://github.com/owner/repo"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                disabled={loading || repository?.analysis_status === 'pending'}
+                className="flex-1"
               />
               <Button 
                 type="submit" 
-                disabled={isLoading || !repoUrl.trim()}
-                className="absolute right-0 top-0 rounded-l-none"
+                disabled={loading || repository?.analysis_status === 'pending'}
+                size="lg"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold min-w-[160px] relative"
               >
-                {isLoading ? (
+                {loading || repository?.analysis_status === 'pending' ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Analyzing
+                    Loading...
                   </>
                 ) : (
-                  <>Analyze</>
+                  <>
+                    <GitBranch className="mr-2 h-4 w-4" />
+                    Analyze Repository
+                  </>
                 )}
               </Button>
             </div>
-          </form>
-          
-          {isLoading && (
-            <div className="mt-4">
-              <div className="h-2 bg-secondary rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary transition-all duration-500 ease-out"
-                  style={{ width: `${progress}%` }}
-                />
+
+            {repository?.analysis_status === 'pending' && (
+              <div className="space-y-2">
+                <Progress value={repository.analysis_progress} className="w-full h-2" />
+                <div className="text-sm text-muted-foreground animate-pulse">
+                  {getProgressMessage()}
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Analyzing repository structure and content...
-              </p>
-            </div>
-          )}
+            )}
+          </form>
         </CardContent>
       </Card>
-
-      {recentRepos.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Recent Repositories</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {recentRepos.map((repo, index) => (
-                <div 
-                  key={index}
-                  className="flex items-center justify-between p-4 rounded-lg border hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex items-center space-x-4">
-                    <GitBranch className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{repo.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(repo.analyzedAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate('/repos')}
-                    className="ml-auto"
-                  >
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
-  );
+  )
 }

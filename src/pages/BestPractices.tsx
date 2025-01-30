@@ -1,385 +1,170 @@
-import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
-import { useToast } from '../components/ui/use-toast';
-import { Loader2, Copy, Search, Tag, Filter, Share2, Bookmark } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { ScrollArea } from '../components/ui/scroll-area';
-import { Badge } from '../components/ui/badge';
-import { Skeleton } from '../components/ui/skeleton';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-  DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu';
+import { useState } from 'react'
+import { useParams } from 'react-router-dom'
+import { Button } from '../components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
+import { Input } from '../components/ui/input'
+import { ScrollArea } from '../components/ui/scroll-area'
+import { useToast } from '../components/ui/use-toast'
+import { Copy, Search } from 'lucide-react'
+import { useRepo } from '../context/RepoContext'
 
 interface BestPractice {
-  id: string;
-  repo_url: string;
-  chunk_text: string;
-  best_practice_reason: string;
-  generalization_potential: boolean;
-  generalization_ideas: string;
-  tags: string[];
-  bookmarked?: boolean;
-}
-
-interface FilterState {
-  hasGeneralization: boolean;
-  isBookmarked: boolean;
-  selectedTags: string[];
+  id: string
+  title: string
+  description: string
+  code?: string
+  language?: string
+  repository?: string
+  tags: string[]
 }
 
 export default function BestPractices() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [practices, setPractices] = useState<BestPractice[]>([]);
-  const [filteredPractices, setFilteredPractices] = useState<BestPractice[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filters, setFilters] = useState<FilterState>({
-    hasGeneralization: false,
-    isBookmarked: false,
-    selectedTags: [],
-  });
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const { toast } = useToast();
+  const { id } = useParams<{ id: string }>()
+  const { repositories } = useRepo()
+  const { toast } = useToast()
+  const [searchQuery, setSearchQuery] = useState('')
 
-  useEffect(() => {
-    async function fetchPractices() {
-      try {
-        const res = await fetch('http://localhost:8001/api/best-practices');
-        if (!res.ok) {
-          throw new Error(`Server error: ${res.status}`);
-        }
-        const data = await res.json();
-        
-        // Get repo from URL if present
-        const urlRepo = searchParams.get('repo');
-        let practices = data.practices || [];
-        
-        if (urlRepo) {
-          practices = practices.filter((p: BestPractice) => p.repo_url === urlRepo);
-        }
+  // If we have an id, we're looking at repo-specific best practices
+  const repository = id ? repositories.find(r => r.id === id) : null
 
-        // Add bookmarked state from localStorage
-        const bookmarked = JSON.parse(localStorage.getItem('bookmarkedPractices') || '[]');
-        practices = practices.map((p: BestPractice) => ({
-          ...p,
-          bookmarked: bookmarked.includes(p.id),
-          tags: p.tags || ['general'], // Ensure tags exist
-        }));
+  // TODO: Replace with actual best practices from the API
+  const bestPractices: BestPractice[] = [
+    {
+      id: '1',
+      title: 'Use TypeScript for Better Type Safety',
+      description: 'TypeScript provides compile-time type checking and better IDE support.',
+      code: `// Bad
+function add(a, b) {
+  return a + b;
+}
 
-        setPractices(practices);
-        
-        // Extract unique tags
-        const tags = Array.from(new Set(practices.flatMap(p => p.tags)));
-        setAvailableTags(tags);
+// Good
+function add(a: number, b: number): number {
+  return a + b;
+}`,
+      language: 'typescript',
+      repository: 'example/repo',
+      tags: ['typescript', 'type-safety']
+    },
+    {
+      id: '2',
+      title: 'Implement Error Boundaries',
+      description: 'Error boundaries catch JavaScript errors anywhere in their child component tree.',
+      code: `class ErrorBoundary extends React.Component {
+  state = { hasError: false }
 
-      } catch (e) {
-        toast({
-          title: 'Error',
-          description: e instanceof Error ? e.message : 'Failed to fetch best practices',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchPractices();
-  }, [searchParams]);
+  static getDerivedStateFromError(error) {
+    return { hasError: true };
+  }
 
-  useEffect(() => {
-    let filtered = [...practices];
-
-    // Apply search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.chunk_text.toLowerCase().includes(query) ||
-          p.best_practice_reason.toLowerCase().includes(query) ||
-          p.repo_url.toLowerCase().includes(query)
-      );
+  render() {
+    if (this.state.hasError) {
+      return <h1>Something went wrong.</h1>;
     }
 
-    // Apply other filters
-    if (filters.hasGeneralization) {
-      filtered = filtered.filter((p) => p.generalization_potential);
+    return this.props.children;
+  }
+}`,
+      language: 'typescript',
+      repository: 'example/repo',
+      tags: ['react', 'error-handling']
     }
-    if (filters.isBookmarked) {
-      filtered = filtered.filter((p) => p.bookmarked);
-    }
-    if (filters.selectedTags.length > 0) {
-      filtered = filtered.filter((p) =>
-        p.tags.some((tag) => filters.selectedTags.includes(tag))
-      );
-    }
+  ]
 
-    setFilteredPractices(filtered);
-  }, [searchQuery, filters, practices]);
+  const filteredPractices = bestPractices.filter(practice => {
+    const query = searchQuery.toLowerCase()
+    return (
+      practice.title.toLowerCase().includes(query) ||
+      practice.description.toLowerCase().includes(query) ||
+      practice.tags.some(tag => tag.toLowerCase().includes(query))
+    )
+  })
 
   const copyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(text)
       toast({
-        title: 'Copied to clipboard',
-        description: 'The code has been copied to your clipboard.',
-      });
-    } catch (err) {
+        title: 'Copied!',
+        description: 'Code snippet copied to clipboard',
+      })
+    } catch (error) {
+      console.error('Failed to copy:', error)
       toast({
-        title: 'Failed to copy',
-        description: 'Please try copying manually.',
+        title: 'Error',
+        description: 'Failed to copy code snippet',
         variant: 'destructive',
-      });
+      })
     }
-  };
-
-  const toggleBookmark = (id: string) => {
-    setPractices((prev) =>
-      prev.map((p) =>
-        p.id === id ? { ...p, bookmarked: !p.bookmarked } : p
-      )
-    );
-
-    // Update localStorage
-    const bookmarked = practices
-      .filter((p) => (p.id === id ? !p.bookmarked : p.bookmarked))
-      .map((p) => p.id);
-    localStorage.setItem('bookmarkedPractices', JSON.stringify(bookmarked));
-  };
-
-  const sharePractice = async (practice: BestPractice) => {
-    try {
-      const shareData = {
-        title: 'Best Practice from ' + practice.repo_url,
-        text: `${practice.best_practice_reason}\n\nCode:\n${practice.chunk_text}`,
-        url: window.location.href,
-      };
-      
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(
-          `${shareData.title}\n\n${shareData.text}\n\n${shareData.url}`
-        );
-        toast({
-          title: 'Copied to clipboard',
-          description: 'Share link has been copied to your clipboard.',
-        });
-      }
-    } catch (err) {
-      toast({
-        title: 'Failed to share',
-        description: 'Please try sharing manually.',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      // Ctrl/Cmd + F for search
-      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-        e.preventDefault();
-        document.querySelector<HTMLInputElement>('#search-input')?.focus();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="container mx-auto p-6 space-y-6">
-        <Skeleton className="h-8 w-64" />
-        <div className="grid gap-6">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-48" />
-          ))}
-        </div>
-      </div>
-    );
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex flex-col space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">Best Practices Library</h1>
-            <p className="text-muted-foreground">
-              {filteredPractices.length} practices found
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                id="search-input"
-                placeholder="Search practices..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 w-[200px]"
-              />
-            </div>
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold mb-2">
+          {repository ? `${repository.name} Best Practices` : 'Best Practices'}
+        </h1>
+        <p className="text-muted-foreground">
+          {repository
+            ? 'Best practices and patterns found in this repository'
+            : 'Collection of best practices from all analyzed repositories'}
+        </p>
+      </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Filter className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuCheckboxItem
-                  checked={filters.hasGeneralization}
-                  onCheckedChange={(checked) =>
-                    setFilters((prev) => ({ ...prev, hasGeneralization: checked }))
-                  }
-                >
-                  Has Generalization
-                </DropdownMenuCheckboxItem>
-                <DropdownMenuCheckboxItem
-                  checked={filters.isBookmarked}
-                  onCheckedChange={(checked) =>
-                    setFilters((prev) => ({ ...prev, isBookmarked: checked }))
-                  }
-                >
-                  Bookmarked
-                </DropdownMenuCheckboxItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+      <div className="flex items-center space-x-2">
+        <Search className="w-4 h-4 text-muted-foreground" />
+        <Input
+          placeholder="Search best practices..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-sm"
+        />
+      </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Tag className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {availableTags.map((tag) => (
-                  <DropdownMenuCheckboxItem
-                    key={tag}
-                    checked={filters.selectedTags.includes(tag)}
-                    onCheckedChange={(checked) =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        selectedTags: checked
-                          ? [...prev.selectedTags, tag]
-                          : prev.selectedTags.filter((t) => t !== tag),
-                      }))
-                    }
+      <div className="grid gap-6">
+        {filteredPractices.map((practice) => (
+          <Card key={practice.id}>
+            <CardHeader>
+              <CardTitle>{practice.title}</CardTitle>
+              <CardDescription>{practice.description}</CardDescription>
+            </CardHeader>
+            {practice.code && (
+              <CardContent>
+                <div className="relative">
+                  <pre className="p-4 rounded-lg bg-muted overflow-x-auto">
+                    <code className={`language-${practice.language}`}>
+                      {practice.code}
+                    </code>
+                  </pre>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-2 right-2"
+                    onClick={() => copyToClipboard(practice.code!)}
                   >
-                    {tag}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {filteredPractices.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-6">
-                <p className="text-muted-foreground">No practices found</p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Try adjusting your search or filters
-                </p>
-              </div>
-            </CardContent>
+                    <Copy className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {practice.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2 py-1 rounded-full bg-primary/10 text-primary text-sm"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </CardContent>
+            )}
           </Card>
-        ) : (
-          <ScrollArea className="h-[calc(100vh-200px)]">
-            <div className="space-y-6 pr-4">
-              {filteredPractices.map((bp) => (
-                <Card key={bp.id} className="relative group">
-                  <CardContent className="pt-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-lg font-semibold">
-                          From {bp.repo_url.split('/').pop()}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleBookmark(bp.id)}
-                          >
-                            <Bookmark
-                              className={`h-4 w-4 ${
-                                bp.bookmarked ? 'fill-current' : ''
-                              }`}
-                            />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => sharePractice(bp)}
-                          >
-                            <Share2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div className="relative">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="absolute right-2 top-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => copyToClipboard(bp.chunk_text)}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        <SyntaxHighlighter
-                          language="typescript"
-                          style={vscDarkPlus}
-                          customStyle={{
-                            margin: 0,
-                            borderRadius: '0.375rem',
-                          }}
-                        >
-                          {bp.chunk_text}
-                        </SyntaxHighlighter>
-                      </div>
-
-                      <div>
-                        <h4 className="font-semibold">Why this is a best practice:</h4>
-                        <p className="mt-1 text-muted-foreground">
-                          {bp.best_practice_reason}
-                        </p>
-                      </div>
-
-                      {bp.generalization_potential && (
-                        <div>
-                          <h4 className="font-semibold">How to apply this elsewhere:</h4>
-                          <p className="mt-1 text-muted-foreground">
-                            {bp.generalization_ideas}
-                          </p>
-                        </div>
-                      )}
-
-                      <div className="flex flex-wrap gap-2">
-                        {bp.tags.map((tag) => (
-                          <Badge key={tag} variant="secondary">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </ScrollArea>
+        ))}
+        {filteredPractices.length === 0 && (
+          <div className="text-center text-muted-foreground">
+            No best practices found
+            {searchQuery && ' matching your search'}
+          </div>
         )}
       </div>
     </div>
-  );
+  )
 }

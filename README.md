@@ -1,285 +1,194 @@
-# GitHub Repository Analyzer
+# RepoAnalyzer
 
-A powerful AI-powered tool for analyzing GitHub repositories, providing deep insights, and enabling interactive exploration of codebases. Built with React, TypeScript, and OpenAI's GPT-4, this application helps developers understand, compare, and learn from different repositories through automated analysis and pattern detection.
+A powerful tool for analyzing GitHub repositories, extracting best practices, and facilitating AI-powered code discussions.
 
-## 🌟 Features and Implementation
+## Features
 
-### 1. Core Architecture
+### 1. Repository Analysis
+- **Code Analysis**: Deep analysis of repository structure, patterns, and practices
+- **Best Practices Detection**: Automatically identifies and extracts best practices from code
+- **Language Support**: Supports multiple programming languages including Python, JavaScript, TypeScript
+- **Codebase Understanding**: Generates insights about code organization and architecture
 
-#### State Management (`AppContext.tsx`)
-- **Global State**: Uses React Context for managing application-wide state
-- **State Structure**:
-  - Repository metadata and analysis results
-  - File structure and content cache
-  - Analysis explanations and chat history
-  - Loading and error states
-- **Auto-save System**:
-  - Debounced saves (1-second delay)
-  - Incremental updates for file content and analysis
-  - State merging to preserve existing data
-  - Visual feedback for save operations
+### 2. AI-Powered Chat
+- **Context-Aware Chat**: Discuss code with AI that understands your repository context
+- **Code Explanations**: Get detailed explanations of code functionality
+- **Best Practice Recommendations**: Receive suggestions for code improvements
+- **Architecture Discussions**: Discuss system design and architectural decisions
 
-#### File System (`localStorageManager.ts`)
-- **Storage Format**: JSON-based storage with compression
-- **Data Structure**:
-  ```typescript
-  interface SavedRepo {
-    url: string;
-    name: string;
-    analysis: AnalysisState;
-    fileStructure: FileStructure[];
-    fileExplanations: Record<string, string>;
-    chatMessages: ChatMessage[];
-    savedAt: string;
-    fullRepoContent?: RepoContentState;
-  }
-  ```
-- **Save Operations**:
-  - Full repository saves
-  - Incremental file content updates
-  - Analysis caching
-  - Chat history preservation
+### 3. Best Practices Management
+- **Practice Collection**: Save and organize best practices found in repositories
+- **Searchable Database**: Search through collected practices
+- **Practice Categories**: Organize practices by language, framework, or domain
+- **Export Capabilities**: Share practices across teams
 
-### 2. User Interface Components
+## Tech Stack
 
-#### Repository Overview
-- **Implementation**: React components with Tailwind CSS
-- **Features**:
-  - Repository metadata display
-  - Language statistics
-  - Star and fork counts
-  - Creation and update timestamps
-  - License information
+### Frontend
+- **Framework**: React with TypeScript
+- **Styling**: Tailwind CSS
+- **State Management**: React Context API
+- **Build Tool**: Vite
+- **Testing**: Jest with React Testing Library
 
-#### File Explorer
-- **Tree Structure**:
-  - Recursive rendering of directories
-  - Lazy loading of file contents
-  - Progress indicators for loading states
-  - Analysis status badges
-- **Content Display**:
-  - Syntax highlighting for code
-  - Size-aware loading for large files
-  - Error handling for failed loads
-  - Reanalysis capability
+### Backend
+- **Framework**: FastAPI (Python 3.11)
+- **Database**: SQLite with SQLAlchemy (async)
+- **Migration**: Alembic
+- **Authentication**: JWT-based
+- **Code Analysis**: Custom analyzers with LLM integration
+- **Logging**: Python logging with rotation
+- **Testing**: pytest with pytest-asyncio for async tests
 
-#### Documentation View
-- **Markdown Rendering**:
-  - Custom ReactMarkdown components
-  - Image path resolution for GitHub content
-  - Syntax highlighting for code blocks
-  - Responsive layout handling
-- **Component Structure**:
-  ```typescript
-  components={{
-    img: ({alt, src}) => <CustomImage />,
-    a: ({href, children}) => <CustomLink />,
-    code: ({children}) => <CodeBlock />,
-    pre: ({children}) => <PreformattedBlock />
-  }}
-  ```
+## Project Structure
 
-### 3. Analysis System
+The project follows a clean architecture pattern with clear separation of concerns:
 
-#### File Analysis
-- **Process**:
-  1. Content loading from GitHub API
-  2. GPT-4 analysis generation
-  3. Result caching and storage
-  4. UI updates with new analysis
-- **Implementation**:
-  ```typescript
-  const reanalyzeFile = async (path: string) => {
-    // Load file content
-    // Generate analysis using GPT-4
-    // Update state and storage
-    // Handle errors and loading states
-  };
-  ```
-
-#### Content Management
-- **Loading Strategy**:
-  - On-demand file loading
-  - Content caching in memory
-  - Persistent storage in localStorage
-  - Auto-save on content changes
-- **Error Handling**:
-  - GitHub API rate limits
-  - Network failures
-  - Invalid file types
-  - Size limitations
-
-### 4. Setup and Configuration
-
-#### Prerequisites
-- Node.js 16 or higher
-- npm or yarn
-- OpenAI API key
-- GitHub personal access token
-
-#### Environment Variables
-```env
-VITE_OPENAI_API_KEY=your_api_key_here
-VITE_GITHUB_TOKEN=your_github_token_here
+```
+.
+├── backend/
+│   ├── src/
+│   │   ├── api/              # API layer
+│   │   │   ├── routes/       # Route handlers
+│   │   │   ├── schemas/      # Request/Response models
+│   │   │   └── main.py      # FastAPI app setup
+│   │   ├── services/         # Business logic
+│   │   │   ├── repo_processor.py  # Repository processing
+│   │   │   ├── task_manager.py    # Async task management
+│   │   │   ├── chat.py           # Chat functionality
+│   │   │   └── vector_store.py   # Vector store service
+│   │   ├── models/          # Database models
+│   │   └── utils/           # Utility functions
+│   └── tests/              # Test suite
+│       ├── api/           # API tests
+│       ├── services/      # Service tests
+│       └── models/        # Model tests
+└── src/                  # Frontend source code
+    ├── api/             # API client and types
+    ├── components/      # React components
+    ├── contexts/        # React contexts
+    └── utils/          # Utility functions
 ```
 
-#### Installation
-1. Clone the repository
+## Setup and Installation
+
+### Prerequisites
+- Python 3.11
+- Node.js 18+
+- Git
+
+### Backend Setup
+1. Create and activate virtual environment:
+   ```bash
+   cd backend
+   python -m venv venv
+   source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+   ```
+
 2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+4. Run database migrations:
+   ```bash
+   python -m alembic upgrade head
+   ```
+
+5. Start the backend server:
+   ```bash
+   python -m uvicorn src.api.main:app --reload --port 8001
+   ```
+
+### Frontend Setup
+1. Install dependencies:
    ```bash
    npm install
    ```
-3. Create `.env` file with required keys
-4. Start development server:
+
+2. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+3. Start the development server:
    ```bash
    npm run dev
    ```
 
-### 5. Technical Decisions
+## Testing
 
-#### React + TypeScript
-- Strong typing for better maintainability
-- Component reusability
-- Enhanced development experience
-- Better error catching at compile time
+### Backend Tests
+The backend uses pytest with pytest-asyncio for testing async code:
 
-#### Vite
-- Fast development server
-- Efficient build process
-- Modern module system
-- Better dependency handling
+1. Activate virtual environment:
+   ```bash
+   cd backend
+   source venv/bin/activate
+   ```
 
-#### Tailwind CSS
-- Utility-first approach
-- Consistent styling
-- Responsive design
-- Dark mode support
+2. Run tests:
+   ```bash
+   python -m pytest tests/ -v
+   ```
 
-#### Local Storage
-- Offline capability
-- Faster access to saved data
-- Reduced API calls
-- Better user experience
+3. Run tests with coverage:
+   ```bash
+   python -m pytest tests/ -v --cov=src
+   ```
 
-### 6. Testing and Quality Assurance
-
-#### Testing Framework
-- **Jest & React Testing Library**: Comprehensive testing setup for components and utilities
-- **Test Coverage**: Automated coverage reporting
-- **Test Scripts**:
-  ```bash
-  npm run test           # Run all tests
-  npm run test:watch    # Run tests in watch mode
-  npm run test:coverage # Generate coverage report
-  ```
-
-### 7. Code Quality Tools
-
-#### Linting and Formatting
-- **ESLint**: JavaScript and TypeScript linting with React-specific rules
-- **Prettier**: Consistent code formatting
-- **Scripts**:
-  ```bash
-  npm run lint      # Check for linting issues
-  npm run lint:fix  # Fix linting issues
-  npm run format    # Format code with Prettier
-  ```
-
-#### Git Hooks
-- **Husky**: Pre-commit hooks for code quality
-- **lint-staged**: Run linters on staged files
-- Automatic formatting and linting before commits
-
-### 8. API Documentation
-
-#### OpenAPI/Swagger
-- **Endpoint Documentation**: Comprehensive API documentation
-- **Response Types**: Detailed response schemas
-- **Error Handling**: Documentation for error responses
-- Access the API documentation at `/docs` when running the backend
-
-### 9. Security
-
-#### CORS Configuration
-- Environment-based CORS settings
-- Restricted HTTP methods and headers
-- Preflight request caching
-- Production URL configuration
-
-## 🚀 Getting Started
-
-1. Clone the repository
+### Frontend Tests
+Run frontend tests with Jest:
 ```bash
-git clone https://github.com/yourusername/repo-analyzer.git
-cd repo-analyzer
+npm test
 ```
 
-2. Install dependencies
-```bash
-npm install
-```
+## API Documentation
 
-3. Set up environment variables
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
+The API documentation is available at:
+- Swagger UI: `http://localhost:8001/docs`
+- ReDoc: `http://localhost:8001/redoc`
 
-4. Start the development server
-```bash
-npm run dev
-```
+## Environment Variables
 
-5. Run tests
-```bash
-npm run test
-```
+### Backend (.env)
+- `DATABASE_URL`: SQLite database URL (default: sqlite+aiosqlite:///./data.db)
+- `GITHUB_TOKEN`: GitHub API token for repository access
+- `OPENAI_API_KEY`: OpenAI API key for AI features
+- `LOG_LEVEL`: Logging level (default: INFO)
 
-6. Access the application
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:8000
-- API Documentation: http://localhost:8000/docs
+### Frontend (.env)
+- `VITE_API_URL`: Backend API URL (default: http://localhost:8001)
+- `VITE_GITHUB_CLIENT_ID`: GitHub OAuth client ID
+- `VITE_APP_NAME`: Application name for display
 
-## 💻 Development
+## Error Handling and Logging
 
-### Code Quality
+### Backend
+- Consistent error handling with custom exceptions
+- Detailed error logging with stack traces
+- Logs stored in `backend/logs/` with rotation (10MB limit)
+- Request/response logging middleware
 
-1. Format code:
-```bash
-npm run format
-```
-
-2. Lint code:
-```bash
-npm run lint
-```
-
-3. Fix linting issues:
-```bash
-npm run lint:fix
-```
-
-### Testing
-
-1. Run all tests:
-```bash
-npm run test
-```
-
-2. Watch mode for development:
-```bash
-npm run test:watch
-```
-
-3. Generate coverage report:
-```bash
-npm run test:coverage
-```
+### Frontend
+- Global error boundary for React components
+- Error logging to console in development
+- API error handling with retry logic
+- User-friendly error messages
 
 ## Contributing
-
-Contributions are welcome! Please read our contributing guidelines and submit pull requests to our GitHub repository.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests
+5. Submit a pull request
 
 ## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License - see LICENSE file for details

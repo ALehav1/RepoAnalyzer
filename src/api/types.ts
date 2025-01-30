@@ -4,29 +4,55 @@ export interface BaseResponse {
   error?: ApiError;
 }
 
-export interface AnalysisResponse extends BaseResponse {
+export interface Repository {
   id: string;
-  data?: {
-    name: string;
-    description: string | null;
-    languages: Array<{
-      name: string;
-      percentage: number;
-    }>;
-    stars: number;
-    forks: number;
-    license: {
-      key: string;
-      name: string;
-      url: string;
-    } | null;
-    readme: string;
-    aiAnalysis: {
-      summary: string;
-      strengths: string[];
-      weaknesses: string[];
-      recommendations: string[];
-    };
+  url: string;
+  name: string;
+  description: string | null;
+  is_valid: boolean;
+  analysis_status: 'pending' | 'completed' | 'failed';
+  analysis_progress: number;
+  last_analyzed: string | null;
+  updated_at: string;
+  created_at: string;
+}
+
+export interface File {
+  id: string;
+  repository_id: string;
+  path: string;
+  size: number;
+  last_modified: string;
+  short_analysis: string | null;
+  detailed_analysis: string | null;
+  analysis_timestamp: string | null;
+}
+
+export interface ChatMessage {
+  id: string;
+  repository_id: string;
+  message: string;
+  response: string;
+  created_at: string;
+}
+
+export interface BestPractice {
+  id: string;
+  repository_id: string;
+  category: string;
+  title: string;
+  description: string;
+  is_generalizable: boolean;
+  created_at: string;
+}
+
+export interface AnalysisResponse extends BaseResponse {
+  repository: Repository;
+  analysis: {
+    summary: string;
+    strengths: string[];
+    weaknesses: string[];
+    recommendations: string[];
     criticalAnalysis: {
       score: number;
       details: string;
@@ -36,13 +62,6 @@ export interface AnalysisResponse extends BaseResponse {
         recommendation: string;
       }>;
     };
-    fileStructure: Array<{
-      path: string;
-      type: 'file' | 'directory';
-      size: number;
-      language?: string;
-      lastModified: string;
-    }>;
     codeExamples: Array<{
       title: string;
       description: string;
@@ -138,12 +157,8 @@ export interface SearchRequest {
 
 // Error types
 export interface ApiError {
-  message: string;
-  code: ErrorCode;
-  status: number;
-  details?: Record<string, any>;
-  timestamp: string;
-  requestId?: string;
+  detail: string;
+  status_code: number;
 }
 
 export interface RetryableError extends ApiError {
@@ -154,18 +169,11 @@ export interface RetryableError extends ApiError {
 
 export type ErrorCode =
   | 'INVALID_REQUEST'
-  | 'UNAUTHORIZED'
-  | 'FORBIDDEN'
-  | 'NOT_FOUND'
-  | 'RATE_LIMIT_EXCEEDED'
-  | 'INTERNAL_SERVER_ERROR'
-  | 'SERVICE_UNAVAILABLE'
-  | 'NETWORK_ERROR'
+  | 'INVALID_REPO_URL'
+  | 'REPO_NOT_FOUND'
+  | 'REPO_ACCESS_DENIED'
+  | 'ANALYSIS_FAILED'
+  | 'RATE_LIMITED'
+  | 'SERVER_ERROR'
   | 'TIMEOUT'
-  | 'PARSE_ERROR'
-  | 'VALIDATION_ERROR'
-  | 'GITHUB_API_ERROR'
-  | 'OPENAI_API_ERROR'
-  | 'FILE_TOO_LARGE'
-  | 'UNSUPPORTED_FILE_TYPE'
   | 'UNKNOWN_ERROR';

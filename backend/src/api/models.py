@@ -1,74 +1,77 @@
-from pydantic import BaseModel, Field
-from typing import Dict, List, Optional
+from sqlalchemy import Column, String, DateTime, ForeignKey, Boolean, JSON, Text, Enum as SQLAEnum
+from sqlalchemy.orm import relationship
+from datetime import datetime
+import uuid
+from .database import Base
 from enum import Enum
 
 class CodeDimension(str, Enum):
+    """Enum for code analysis dimensions."""
     ARCHITECTURE_DESIGN = "architecture_design"
-    STATE_MANAGEMENT = "state_management"
-    API_BACKEND = "api_backend"
+    CODE_QUALITY = "code_quality"
     DOCUMENTATION = "documentation"
     TESTING = "testing"
-    PERFORMANCE_SECURITY = "performance_security"
+    SECURITY = "security"
+    PERFORMANCE = "performance"
 
-class AnalysisDimensions(BaseModel):
-    architecture_design: bool = Field(default=False, description="Code architecture and design patterns")
-    state_management: bool = Field(default=False, description="State management and data flow")
-    api_backend: bool = Field(default=False, description="API and backend integration")
-    documentation: bool = Field(default=False, description="Code documentation and comments")
-    testing: bool = Field(default=False, description="Testing and test coverage")
-    performance_security: bool = Field(default=False, description="Performance and security considerations")
+class Repository(Base):
+    """Model for code repositories."""
+    __tablename__ = "repositories"
 
-class CodeAnalysis(BaseModel):
-    dimensions: AnalysisDimensions
-    summary: str = Field(..., description="Brief summary of the code analysis")
-    best_practice: bool = Field(default=False, description="Whether this code represents a best practice")
-    best_practice_reason: str = Field(default="", description="Reason for considering this a best practice")
-    generalization_potential: bool = Field(default=False, description="Whether this code can be generalized")
-    generalization_ideas: str = Field(default="", description="Ideas for generalizing this code")
-    suggestions: List[str] = Field(default_factory=list, description="Suggestions for improvement")
-    patterns_detected: List[str] = Field(default_factory=list, description="Design patterns detected in the code")
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    url = Column(String, nullable=False)
+    name = Column(String, nullable=False)
+    is_valid = Column(Boolean, default=True)
+    local_path = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_analyzed_at = Column(DateTime, nullable=True)
+    analysis_cache = Column(JSON, nullable=True)
 
-class ChunkMetadata(BaseModel):
-    file_path: str
-    start_line: int
-    end_line: int
-    n_lines: int
-    imports: List[str]
-    definitions: List[str]
-    file_type: str
-    n_tokens: int
+    # Relationships
+    files = relationship("FileAnalysis", back_populates="repository", cascade="all, delete-orphan")
+    best_practices = relationship("BestPractice", back_populates="repository", cascade="all, delete-orphan")
+    chat_messages = relationship("ChatMessage", back_populates="repository", cascade="all, delete-orphan")
 
-class CodeChunk(BaseModel):
-    content: str
-    metadata: ChunkMetadata
-    analysis: Optional[CodeAnalysis] = None
+class FileAnalysis(Base):
+    """Model for file analysis results."""
+    __tablename__ = "file_analyses"
 
-class FileAnalysis(BaseModel):
-    file_path: str
-    chunks: List[CodeChunk]
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    repo_id = Column(String, ForeignKey("repositories.id"), nullable=False)
+    path = Column(String, nullable=False)
+    content_hash = Column(String, nullable=False)
+    short_analysis = Column(Text, nullable=True)
+    detailed_analysis = Column(Text, nullable=True)
+    analysis_timestamp = Column(DateTime, nullable=True)
 
-class AnalysisResponse(BaseModel):
-    repo_url: str
-    files_analyzed: int
-    chunks_analyzed: int
-    best_practices_found: int
-    file_analyses: List[FileAnalysis]
+    # Relationships
+    repository = relationship("Repository", back_populates="files")
 
-class SearchMatch(BaseModel):
-    text: str
-    metadata: Dict
-    id: str
+class BestPractice(Base):
+    """Model for best practices found in code."""
+    __tablename__ = "best_practices"
 
-class SearchResponse(BaseModel):
-    results: List[SearchMatch]
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    repo_id = Column(String, ForeignKey("repositories.id"), nullable=False)
+    file_path = Column(String, nullable=False)
+    code_snippet = Column(Text, nullable=False)
+    explanation = Column(Text, nullable=False)
+    category = Column(SQLAEnum(CodeDimension), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
-class BestPractice(BaseModel):
-    id: str
-    repo_url: str
-    file_path: str
-    chunk_text: str
-    analysis: CodeAnalysis
-    metadata: ChunkMetadata
+    # Relationships
+    repository = relationship("Repository", back_populates="best_practices")
 
-class BestPracticesResponse(BaseModel):
-    best_practices: List[BestPractice]
+class ChatMessage(Base):
+    """Model for chat messages."""
+    __tablename__ = "chat_messages"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    content = Column(Text, nullable=False)
+    repository_id = Column(String, ForeignKey("repositories.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    repository = relationship("Repository", back_populates="chat_messages")
