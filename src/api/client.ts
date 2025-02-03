@@ -1,51 +1,67 @@
 import { Repository, ChatMessage, BestPractice, AnalysisResponse } from './types'
+import { PatternAnalysisRequest, PatternAnalysisResponse } from '../types/patterns'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8001/api'
-const MAX_RETRIES = 3
-const RETRY_DELAY = 1000 // 1 second
-const CONNECTION_TIMEOUT = 30000 // 30 seconds
+// Try environment variables first, then fall back to port detection
+const API_BASE_URL = import.meta.env.VITE_API_URL || (() => {
+  // List of common development ports to try
+  const ports = [10005, 10004, 10003, 10002, 10001, 3000];
+  return `http://localhost:${ports[0]}`; // Start with first port, health check will verify
+})();
 
-let isServerAvailable = false
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000; // 1 second
+const CONNECTION_TIMEOUT = 30000; // 30 seconds
+
+let isServerAvailable = false;
+let currentPort = parseInt(API_BASE_URL.split(':').pop() || '10005');
 
 async function sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
 export async function checkServerStatus(): Promise<boolean> {
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), CONNECTION_TIMEOUT)
+  const ports = [10005, 10004, 10003, 10002, 10001, 3000];
+  
+  for (const port of ports) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000); // Shorter timeout for port checking
 
-    const response = await fetch(`${API_BASE_URL}/health`, {
-      signal: controller.signal,
-      mode: 'cors',
-      headers: {
-        'Accept': 'application/json'
+      const response = await fetch(`http://localhost:${port}/api/health`, {
+        signal: controller.signal,
+        mode: 'cors',
+        headers: {
+          'Accept': 'application/json'
+        }
+      });
+      clearTimeout(timeoutId);
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === 'healthy') {
+          // Update the base URL and port if we found a working server
+          currentPort = port;
+          isServerAvailable = true;
+          return true;
+        }
       }
-    })
-    clearTimeout(timeoutId)
-    
-    if (response.ok) {
-      const data = await response.json()
-      isServerAvailable = data.status === 'healthy'
-      return isServerAvailable
+    } catch (error) {
+      console.debug(`Port ${port} not available:`, error);
+      continue; // Try next port
     }
-    
-    isServerAvailable = false
-    return false
-  } catch (error) {
-    console.error('Server health check failed:', error)
-    isServerAvailable = false
-    return false
   }
+  
+  console.error('No available backend server found on any port');
+  isServerAvailable = false;
+  return false;
 }
 
 async function request<T>(endpoint: string, options: RequestInit = {}, retries = MAX_RETRIES): Promise<T> {
   if (!isServerAvailable && endpoint !== '/health') {
-    console.log('Server status unknown, checking health...')
-    const serverUp = await checkServerStatus()
+    console.log('Server status unknown, checking health...');
+    const serverUp = await checkServerStatus();
     if (!serverUp) {
-      throw new Error('Server is not available. Please try again later.')
+      throw new Error('Server is not available. Please try again later.');
     }
   }
 
@@ -64,7 +80,8 @@ async function request<T>(endpoint: string, options: RequestInit = {}, retries =
       },
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, requestOptions)
+    const url = `http://localhost:${currentPort}${endpoint}`;
+    const response = await fetch(url, requestOptions)
     clearTimeout(timeoutId)
 
     const contentType = response.headers.get('content-type')
@@ -107,11 +124,18 @@ async function request<T>(endpoint: string, options: RequestInit = {}, retries =
 
 // Repository endpoints
 export async function processRepo(url: string): Promise<Repository> {
-  console.log('Processing repository:', url)
-  return request<Repository>('/api/repositories/process-repo', {
-    method: 'POST',
-    body: JSON.stringify({ url }),
-  })
+  try {
+    console.log('Starting repository processing for URL:', url);
+    const repository = await request<Repository>('/api/repositories/process-repo', {
+      method: 'POST',
+      body: JSON.stringify({ url }),
+    });
+    console.log('Repository processing initiated successfully:', repository.id);
+    return repository;
+  } catch (error) {
+    console.error('Error processing repository:', error);
+    throw new Error(`Failed to process repository: ${error.message}`);
+  }
 }
 
 export async function getRepo(id: string): Promise<Repository> {
@@ -187,5 +211,16 @@ export async function markPracticeGeneralizable(practiceId: string): Promise<Bes
   console.log('Marking practice as generalizable:', practiceId)
   return request<BestPractice>(`/api/practices/${practiceId}/generalize`, {
     method: 'POST',
+  })
+}
+
+// Pattern Detection endpoints
+export async function analyzePatterns(filePath: string): Promise<PatternAnalysisResponse> {
+  return request<PatternAnalysisResponse>('/v1/patterns/analyze', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ file_path: filePath }),
   })
 }

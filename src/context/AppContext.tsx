@@ -50,7 +50,7 @@ interface AppContextType {
   refreshRepositories: () => Promise<void>;
 }
 
-const AppContext = createContext<AppContextState | undefined>(undefined);
+export const AppContext = createContext<AppContextState | undefined>(undefined);
 const AppContext2 = createContext<AppContextType>({
   repositories: [],
   loading: false,

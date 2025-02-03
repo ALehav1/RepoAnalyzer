@@ -1,6 +1,6 @@
 """Pydantic schemas for pattern detection API."""
-from pydantic import BaseModel, Field, validator, constr
-from typing import List, Dict, Any, Optional
+from pydantic import BaseModel, Field, field_validator, ConfigDict
+from typing import List, Dict, Any
 from pathlib import Path
 import os
 
@@ -12,8 +12,9 @@ class PatternAnalysisRequest(BaseModel):
         examples=["/path/to/file.py"]
     )
 
-    @validator('file_path')
-    def validate_file_path(cls, v):
+    @field_validator('file_path')
+    @classmethod
+    def validate_file_path(cls, v: Path) -> Path:
         """Validate the file path."""
         # Convert to string for validation
         path_str = str(v)
@@ -26,9 +27,10 @@ class PatternAnalysisRequest(BaseModel):
 
 class PatternMatch(BaseModel):
     """Schema for a detected pattern."""
-    name: constr(min_length=1) = Field(
+    name: str = Field(
         ...,
         description="Name of the detected pattern",
+        min_length=1,
         examples=["factory", "singleton", "observer"]
     )
     confidence: float = Field(
@@ -56,8 +58,9 @@ class PatternMatch(BaseModel):
         }]
     )
     
-    @validator('context')
-    def validate_context(cls, v):
+    @field_validator('context')
+    @classmethod
+    def validate_context(cls, v: Dict[str, Any]) -> Dict[str, Any]:
         """Validate the context dictionary."""
         required_keys = {'complexity', 'dependencies', 'methods'}
         missing_keys = required_keys - set(v.keys())
@@ -80,12 +83,11 @@ class PatternAnalysisResponse(BaseModel):
     patterns: List[PatternMatch] = Field(
         ...,
         description="List of detected patterns",
-        min_items=0
+        min_length=0
     )
     
-    class Config:
-        """Pydantic model configuration."""
-        schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "patterns": [
                     {
@@ -103,3 +105,4 @@ class PatternAnalysisResponse(BaseModel):
                 ]
             }
         }
+    )

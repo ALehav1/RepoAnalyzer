@@ -1,37 +1,35 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { Toaster } from './components/ui/toaster'
-import { RepoProvider } from './context/RepoContext'
-import { ThemeProvider } from './components/theme-provider'
-import Layout from './components/layout'
-import LoadRepo from './pages/LoadRepo'
-import SavedRepos from './pages/SavedRepos'
-import RepoDetail from './pages/RepoDetail'
-import Chat from './pages/Chat'
-import GlobalChat from './pages/GlobalChat'
-import BestPractices from './pages/BestPractices'
+import React, { useEffect } from 'react';
+import { ThemeProvider } from '@mui/material/styles';
+import { CssBaseline, Container, Box } from '@mui/material';
+import * as Sentry from '@sentry/react';
+import { theme } from './theme/theme';
+import { AnalysisProvider } from './context/AnalysisContext';
+import { AppErrorBoundary } from './components/Layout/ErrorBoundary';
+import { RepositoryInputSection } from './components/Analysis/RepositoryInputSection';
+import { AnalysisDashboard } from './components/Analysis/AnalysisDashboard';
+import { initializeMonitoring } from './utils/monitoring';
 
-export default function App() {
+const App: React.FC = () => {
+  useEffect(() => {
+    // Initialize monitoring on app start
+    initializeMonitoring();
+  }, []);
+
   return (
-    <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-      <RepoProvider>
-        <Router>
-          <Layout>
-            <Routes>
-              {/* Global Routes */}
-              <Route path="/" element={<LoadRepo />} />
-              <Route path="/saved" element={<SavedRepos />} />
-              <Route path="/chat" element={<GlobalChat />} />
-              <Route path="/practices" element={<BestPractices />} />
-
-              {/* Repository-Specific Routes */}
-              <Route path="/repos/:id" element={<RepoDetail />} />
-              <Route path="/repos/:id/chat" element={<Chat />} />
-              <Route path="/repos/:id/practices" element={<BestPractices />} />
-            </Routes>
-          </Layout>
-          <Toaster />
-        </Router>
-      </RepoProvider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AppErrorBoundary>
+        <AnalysisProvider>
+          <Container maxWidth="lg">
+            <Box sx={{ my: 4 }}>
+              <RepositoryInputSection />
+              <AnalysisDashboard />
+            </Box>
+          </Container>
+        </AnalysisProvider>
+      </AppErrorBoundary>
     </ThemeProvider>
-  )
-}
+  );
+};
+
+export default Sentry.withProfiler(App);

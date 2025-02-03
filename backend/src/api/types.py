@@ -5,32 +5,46 @@ class BaseResponse(BaseModel):
     status: str = "success"
     error: Optional[Dict] = None
 
-class ChunkAnalysis(BaseModel):
-    complexity: str
-    best_practice: bool
-    suggestions: List[str]
-    metadata: Dict[str, Any]
+class DocumentationQuality(BaseModel):
+    readme_quality: float
+    api_docs_quality: float
+    comments_quality: float
 
-class FileAnalysis(BaseModel):
-    file_path: str
-    chunks: List[ChunkAnalysis]
+class BestPractices(BaseModel):
+    code_organization: float
+    testing: float
+    security: float
+    performance: float
 
-class AnalysisResponse(BaseModel):
-    repository_url: str
-    local_path: str
-    total_files: int
-    total_chunks: int
-    file_analyses: List[FileAnalysis]
-    best_practices: List[ChunkAnalysis]
-    status: str = "success"
-    error: Optional[Dict] = None
+class Summary(BaseModel):
+    files_count: int
+    lines_of_code: int
+    languages: Dict[str, float]
 
-class SearchResponse(BaseModel):
-    results: List[Dict]
-    status: str = "success"
-    error: Optional[Dict] = None
+class AnalysisResult(BaseModel):
+    id: str
+    url: str
+    status: str
+    summary: Summary
+    documentation: DocumentationQuality
+    best_practices: BestPractices
 
-class BestPracticesResponse(BaseModel):
-    practices: List[Dict]
-    status: str = "success"
-    error: Optional[Dict] = None
+class Message(BaseModel):
+    id: str
+    role: str  # 'user' | 'assistant'
+    content: str
+    timestamp: str
+
+class FileNode(BaseModel):
+    name: str
+    path: str
+    type: str  # 'file' | 'directory'
+    children: Optional[List['FileNode']] = None
+
+class AnalyzeRequest(BaseModel):
+    url: str
+
+class BulkAnalyzeRequest(BaseModel):
+    urls: List[str]
+
+FileNode.update_forward_refs()

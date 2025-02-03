@@ -1,0 +1,14 @@
+{
+  "complexity": 75,
+  "maintainability": 85,
+  "testCoverage": 90,
+  "documentation": 80,
+  "dependencies": [
+    { "name": "react", "count": 120 },
+    { "name": "lodash", "count": 45 }
+  ],
+  "languages": [
+    { "name": "TypeScript", "percentage": 60 },
+    { "name": "JavaScript", "percentage": 40 }
+  ]
+}

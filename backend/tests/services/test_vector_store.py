@@ -1,172 +1,115 @@
-"""Tests for the vector store service."""
-
+"""Tests for vector store service."""
 import pytest
-from unittest.mock import MagicMock, patch
-import chromadb
-from chromadb.config import Settings
+from unittest.mock import AsyncMock, MagicMock, patch
+import numpy as np
+import tempfile
+import shutil
+import os
+from pathlib import Path
+from chromadb.api.types import EmbeddingFunction
+
 from src.services.vector_store import VectorStoreService
+from src.models.base import File
+
+class MockEmbeddingFunction(EmbeddingFunction):
+    """Mock implementation of ChromaDB's EmbeddingFunction."""
+    def __call__(self, input: list[str]) -> list[list[float]]:
+        """Generate mock embeddings."""
+        return [np.random.rand(1536).tolist() for _ in input]
 
 @pytest.fixture
-def mock_chroma_client():
-    """Create a mock ChromaDB client."""
-    client = MagicMock()
-    
-    # Mock collections
-    code_collection = MagicMock()
-    practices_collection = MagicMock()
-    
-    # Setup collection query responses
-    code_collection.query.return_value = {
-        'documents': [['def test(): pass']],
-        'metadatas': [{'file': 'test.py', 'type': 'python'}],
-        'distances': [[0.1]]
-    }
-    
-    practices_collection.query.return_value = {
-        'documents': [['Use descriptive variable names']],
-        'metadatas': [{'category': 'style', 'language': 'python'}],
-        'distances': [[0.2]]
-    }
-    
-    client.get_or_create_collection.side_effect = [code_collection, practices_collection]
-    return client
+def mock_openai_embeddings():
+    """Mock OpenAI embeddings."""
+    with patch('chromadb.utils.embedding_functions.OpenAIEmbeddingFunction') as mock:
+        mock.return_value = MockEmbeddingFunction()
+        yield mock
 
-@pytest.fixture
-def vector_store(mock_chroma_client):
-    """Create a VectorStoreService with mocked dependencies."""
-    store = VectorStoreService()
-    store.client = mock_chroma_client
-    store.embedding_fn = lambda texts: [[0.1] * 1536 for _ in texts]
-    return store
+def test_vector_store_initialization(mock_openai_embeddings):
+    """Test vector store initialization."""
+    store = VectorStoreService.get_instance()  # Use in-memory store
+    assert store is not None
+    
+    # Test singleton pattern
+    store2 = VectorStoreService.get_instance()
+    assert store is store2
 
 @pytest.mark.asyncio
-async def test_add_code_chunk(vector_store):
+async def test_add_code_chunk(mock_openai_embeddings):
     """Test adding a code chunk to the vector store."""
-    chunk_text = "def test(): pass"
-    metadata = {"file": "test.py", "type": "python"}
-    chunk_id = "test_1"
+    store = VectorStoreService.get_instance()  # Use in-memory store
     
-    await vector_store.add_code_chunk(chunk_text, metadata, chunk_id)
+    # Add code chunk
+    chunk_id = "test1"
+    content = "def test_function():\n    pass"
+    metadata = {"path": "/test/file.py", "language": "python"}
     
-    # Verify chunk was added to code collection
-    vector_store.code_collection.add.assert_called_once_with(
-        documents=[chunk_text],
-        metadatas=[metadata],
-        ids=[chunk_id]
-    )
+    await store.add_code_chunk(content, metadata, chunk_id)
+    
+    # Verify chunk was added
+    results = await store.search_code_chunks("test function")
+    assert len(results) > 0
+    assert results[0]['text'] == content
+    assert results[0]['similarity'] >= 0  # Distance should be non-negative
+    assert results[0]['similarity'] <= 1  # Distance should be normalized
+    assert results[0]['metadata'] == metadata
 
 @pytest.mark.asyncio
-async def test_add_best_practice_chunk(vector_store):
-    """Test adding a best practice chunk to the vector store."""
-    practice_text = "Use descriptive variable names"
-    metadata = {"category": "style", "language": "python"}
-    chunk_id = "practice_1"
+async def test_search_code_chunks(mock_openai_embeddings):
+    """Test searching for similar code chunks."""
+    store = VectorStoreService.get_instance()  # Use in-memory store
     
-    await vector_store.add_code_chunk(
-        practice_text,
-        metadata,
-        chunk_id,
-        is_best_practice=True
-    )
+    # Add multiple chunks
+    chunks = [
+        ("chunk1", "def function1():\n    pass", {"path": "/test/file1.py"}),
+        ("chunk2", "def function2():\n    return True", {"path": "/test/file2.py"}),
+        ("chunk3", "class TestClass:\n    pass", {"path": "/test/file3.py"})
+    ]
     
-    # Verify practice was added to practices collection
-    vector_store.practices_collection.add.assert_called_once_with(
-        documents=[practice_text],
-        metadatas=[metadata],
-        ids=[chunk_id]
-    )
+    for chunk_id, content, metadata in chunks:
+        await store.add_code_chunk(content, metadata, chunk_id)
+    
+    # Search for functions
+    results = await store.search_code_chunks("function")
+    assert len(results) >= 2
+    assert any("function" in r['text'] for r in results)  # At least one function in results
+    assert all(0 <= r['similarity'] <= 1 for r in results)  # All distances normalized
+    
+    # Search for class
+    results = await store.search_code_chunks("class")
+    assert len(results) >= 1
+    assert any("TestClass" in r['text'] for r in results)  # Class should be in results
 
 @pytest.mark.asyncio
-async def test_search_code_chunks(vector_store):
-    """Test searching for code chunks."""
-    query = "test function"
-    results = await vector_store.search_code_chunks(query, n_results=1)
+async def test_best_practices(mock_openai_embeddings):
+    """Test best practices functionality."""
+    store = VectorStoreService.get_instance()  # Use in-memory store
     
-    # Verify search results
-    assert len(results) == 1
-    assert results[0]['text'] == 'def test(): pass'
-    assert results[0]['metadata']['file'] == 'test.py'
-    assert results[0]['type'] == 'code'
-    assert results[0]['similarity'] == 0.9  # 1 - distance
-
-@pytest.mark.asyncio
-async def test_search_with_best_practices(vector_store):
-    """Test searching including best practices."""
-    query = "coding style"
-    results = await vector_store.search_code_chunks(
-        query,
-        n_results=2,
-        include_best_practices=True
-    )
-    
-    # Verify combined results
-    assert len(results) == 2
-    assert any(r['type'] == 'code' for r in results)
-    assert any(r['type'] == 'best_practice' for r in results)
-
-@pytest.mark.asyncio
-async def test_save_best_practice(vector_store):
-    """Test saving a best practice."""
+    # Add a best practice
     practice = {
-        'text': 'Use meaningful variable names',
-        'metadata': {'category': 'style'},
-        'id': 'practice_1'
+        'id': 'bp1',
+        'text': 'Always use type hints in Python functions',
+        'metadata': {
+            'category': 'python',
+            'importance': 'high'
+        }
     }
     
-    vector_store.save_best_practice(practice)
+    store.save_best_practice(practice)
     
-    # Verify practice was saved
-    vector_store.practices_collection.add.assert_called_once_with(
-        documents=[practice['text']],
-        metadatas=[practice['metadata']],
-        ids=[practice['id']]
-    )
-
-def test_get_similar_practices(vector_store):
-    """Test finding similar best practices."""
-    text = "variable naming conventions"
-    results = vector_store.get_similar_practices(text)
-    
-    # Verify similar practices were found
-    assert len(results) == 1
-    assert results[0]['text'] == 'Use descriptive variable names'
-    assert results[0]['metadata']['category'] == 'style'
-    assert results[0]['similarity'] == 0.8  # 1 - distance
+    # Search for similar practices
+    results = store.get_similar_practices("type hints")
+    assert len(results) > 0
+    assert 'type hints' in results[0]['text'].lower()
 
 @pytest.mark.asyncio
-async def test_add_code_chunk_error(vector_store):
-    """Test error handling when adding code chunks."""
-    vector_store.code_collection.add.side_effect = Exception("Database error")
+async def test_error_handling(mock_openai_embeddings):
+    """Test error handling in vector store operations."""
+    store = VectorStoreService.get_instance()  # Use in-memory store
     
-    with pytest.raises(Exception) as exc:
-        await vector_store.add_code_chunk("test", {}, "test_1")
-    assert "Database error" in str(exc.value)
-
-@pytest.mark.asyncio
-async def test_search_error(vector_store):
-    """Test error handling during search."""
-    vector_store.code_collection.query.side_effect = Exception("Search error")
+    # Test adding with invalid ID
+    with pytest.raises(Exception):
+        await store.add_code_chunk(None, {}, None)
     
-    with pytest.raises(Exception) as exc:
-        await vector_store.search_code_chunks("test")
-    assert "Search error" in str(exc.value)
-
-def test_persistence(tmp_path):
-    """Test vector store persistence."""
-    # Create persistent store
-    store1 = VectorStoreService(persist_directory=str(tmp_path))
-    
-    # Add some data
-    store1.practices_collection.add(
-        documents=["test practice"],
-        metadatas=[{"test": True}],
-        ids=["test1"]
-    )
-    
-    # Create new store with same persistence
-    store2 = VectorStoreService(persist_directory=str(tmp_path))
-    
-    # Verify data persisted
-    results = store2.practices_collection.get(ids=["test1"])
-    assert results['documents'][0] == "test practice"
-    assert results['metadatas'][0]['test'] is True
+    # Test searching with empty query
+    results = await store.search_code_chunks("")
+    assert len(results) == 0

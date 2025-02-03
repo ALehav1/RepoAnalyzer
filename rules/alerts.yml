@@ -1,0 +1,97 @@
+groups:
+  - name: repoanalyzer
+    rules:
+      # API Health
+      - alert: HighErrorRate
+        expr: rate(http_request_total{status=~"5.."}[5m]) / rate(http_request_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: High HTTP error rate
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5m"
+
+      - alert: SlowRequests
+        expr: http_request_duration_seconds{quantile="0.9"} > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Slow HTTP requests
+          description: "90th percentile of request duration is {{ $value }}s"
+
+      # Repository Analysis
+      - alert: AnalysisFailures
+        expr: rate(analysis_errors_total[15m]) > 0
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: Repository analysis failures
+          description: "Analysis failures detected in the last 15m"
+
+      - alert: LongRunningAnalysis
+        expr: analysis_duration_seconds_sum > 3600
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: Long-running analysis
+          description: "Analysis taking more than 1 hour to complete"
+
+      # Database
+      - alert: HighDatabaseConnections
+        expr: db_connections > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High database connections
+          description: "{{ $value }} active database connections"
+
+      - alert: SlowDatabaseQueries
+        expr: rate(db_query_duration_seconds_sum[5m]) / rate(db_query_duration_seconds_count[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Slow database queries
+          description: "Average query duration is {{ $value }}s"
+
+      # Redis
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: Redis is down
+          description: "Redis instance has been down for more than 1 minute"
+
+      - alert: RedisHighMemory
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: Redis high memory usage
+          description: "Redis memory usage is {{ $value | humanizePercentage }}"
+
+      # System
+      - alert: HighCPUUsage
+        expr: rate(process_cpu_seconds_total[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High CPU usage
+          description: "CPU usage is {{ $value | humanizePercentage }}"
+
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes / node_memory_MemTotal_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: High memory usage
+          description: "Memory usage is {{ $value | humanizePercentage }}"

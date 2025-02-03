@@ -1,71 +1,74 @@
 """Database configuration module."""
-import os
-from pathlib import Path
-from typing import AsyncGenerator
-from dotenv import load_dotenv
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-import logging
+from contextlib import contextmanager
+from typing import Iterator, AsyncGenerator
+import structlog
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 
-from .models.base import Base
+logger = structlog.get_logger(__name__)
 
-logger = logging.getLogger(__name__)
-
-# Load environment variables
-load_dotenv()
-
-# Create instance directory if it doesn't exist
-instance_dir = Path("instance")
-instance_dir.mkdir(parents=True, exist_ok=True)
-logger.info(f"Using instance directory: {instance_dir.absolute()}")
-
-# Database configuration
-DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    f"sqlite+aiosqlite:///{instance_dir}/app.db"
-).replace("sqlite://", "sqlite+aiosqlite://")
-logger.info(f"Using database URL: {DATABASE_URL}")
-
-# Configure SQLAlchemy engine with better defaults
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=False,
-    pool_pre_ping=True,
-    pool_recycle=300,
-    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+# Create SQLite engine
+engine = create_engine(
+    "sqlite:///./repo_analyzer.db",
+    connect_args={"check_same_thread": False},
+    echo=True
 )
 
-# Configure session maker with better defaults
+# Create session factory
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
+
+# Create async engine
+async_engine = create_async_engine(
+    "sqlite+aiosqlite:///./repo_analyzer.db",
+    echo=True
+)
+
+# Create async session maker
 async_session_maker = async_sessionmaker(
-    bind=engine,
+    async_engine,
     class_=AsyncSession,
     expire_on_commit=False,
-    autocommit=False,
-    autoflush=False
 )
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Get a database session."""
+# Create declarative base
+Base = declarative_base()
+
+@contextmanager
+def get_db() -> Iterator[Session]:
+    """Get database session.
+    
+    Yields:
+        Session: Database session
+    """
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
+    """Get async database session."""
     async with async_session_maker() as session:
         try:
             yield session
-        except Exception as e:
-            logger.error(f"Database session error: {str(e)}")
+            await session.commit()
+        except Exception:
             await session.rollback()
             raise
-        finally:
-            await session.close()
 
-async def init_db() -> None:
-    """Initialize the database schema."""
-    try:
-        logger.info("Creating database tables...")
-        async with engine.begin() as conn:
-            await conn.run_sync(Base.metadata.create_all)
-        logger.info("Database tables created successfully")
-    except Exception as e:
-        logger.error(f"Failed to initialize database: {str(e)}")
-        raise
+# Initialize database
+def init_db():
+    """Initialize database."""
+    Base.metadata.create_all(bind=engine)
+
+# Initialize the database schema
+init_db()
 
 if __name__ == "__main__":
-    import asyncio
-    asyncio.run(init_db())
+    init_db()

@@ -56,25 +56,45 @@ const chunkText = (text: string, maxChunkSize: number = 500): string[] => {
 
 // Get embedding for a text
 const getEmbedding = async (text: string): Promise<number[]> => {
-  const openai = getOpenAIClient();
-  const response = await openai.embeddings.create({
-    model: 'text-embedding-ada-002',
-    input: text,
-  });
-  return response.data[0].embedding;
+  try {
+    const openai = getOpenAIClient();
+    console.log('Generating embedding for text of length:', text.length);
+    
+    const response = await openai.embeddings.create({
+      model: 'text-embedding-ada-002',
+      input: text,
+    });
+    
+    console.log('Successfully generated embedding');
+    return response.data[0].embedding;
+  } catch (error) {
+    console.error('Error generating embedding:', error);
+    throw new Error(`Failed to generate embedding: ${error.message}`);
+  }
 };
 
 // Add a document to the store
 export const addDocument = async (doc: Omit<DocumentChunk, 'embedding'>) => {
-  const chunks = chunkText(doc.content);
-  
-  for (const chunk of chunks) {
-    const embedding = await getEmbedding(chunk);
-    documents.push({
-      content: chunk,
-      metadata: doc.metadata,
-      embedding,
-    });
+  try {
+    console.log('Processing document for repo:', doc.metadata.repoUrl);
+    const chunks = chunkText(doc.content);
+    console.log('Split document into', chunks.length, 'chunks');
+    
+    for (const chunk of chunks) {
+      const embedding = await getEmbedding(chunk);
+      documents.push({
+        content: chunk,
+        metadata: doc.metadata,
+        embedding,
+      });
+    }
+    
+    console.log('Successfully added document with', chunks.length, 'chunks');
+    // Persist after each document to avoid data loss
+    await persistDocuments();
+  } catch (error) {
+    console.error('Error adding document:', error);
+    throw new Error(`Failed to add document: ${error.message}`);
   }
 };
 

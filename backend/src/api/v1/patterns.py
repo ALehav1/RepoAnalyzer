@@ -3,11 +3,14 @@ import os
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Dict, Any
 from ...services.pattern_detectors.advanced_pattern_detector import AdvancedPatternDetector
-from ...schemas.patterns import PatternAnalysisRequest, PatternAnalysisResponse
+from ...schemas.patterns import PatternAnalysisRequest, PatternAnalysisResponse, PatternMatch
 from ...core.exceptions import PatternDetectionError, FileAccessError
+from ...core.logging import get_logger
+import time
 
 router = APIRouter(prefix="/api/v1/patterns", tags=["patterns"])
 detector = AdvancedPatternDetector()
+logger = get_logger(__name__)
 
 @router.post("/analyze", response_model=PatternAnalysisResponse)
 async def analyze_patterns(request: PatternAnalysisRequest) -> PatternAnalysisResponse:
@@ -24,6 +27,9 @@ async def analyze_patterns(request: PatternAnalysisRequest) -> PatternAnalysisRe
         PatternDetectionError: If pattern analysis fails
         HTTPException: For other errors
     """
+    start_time = time.time()
+    logger.info("pattern_analysis.started", file_path=str(request.file_path))
+    
     try:
         # Validate file exists and is readable
         if not os.path.exists(request.file_path):
@@ -53,34 +59,67 @@ async def analyze_patterns(request: PatternAnalysisRequest) -> PatternAnalysisRe
             )
         
         # Analyze patterns
-        patterns = await detector.analyze_file(request.file_path)
+        detector_matches = await detector.analyze_file(request.file_path)
+        
+        # Convert detector matches to Pydantic models
+        patterns = [
+            PatternMatch(
+                name=match.name,
+                confidence=match.confidence,
+                line_number=match.line_number,
+                context={
+                    "complexity": match.context.complexity,
+                    "dependencies": match.context.dependencies,
+                    "methods": match.context.methods,
+                    "attributes": match.context.attributes,
+                    "related_patterns": match.context.related_patterns
+                }
+            )
+            for match in detector_matches
+        ]
+        
+        duration = time.time() - start_time
+        logger.info(
+            "pattern_analysis.completed",
+            file_path=str(request.file_path),
+            pattern_count=len(patterns),
+            duration_ms=round(duration * 1000, 2)
+        )
         
         return PatternAnalysisResponse(patterns=patterns)
         
     except FileAccessError as e:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "error_code": "FILE_ACCESS_ERROR",
-                "message": str(e),
-                "details": e.details if hasattr(e, 'details') else None
-            }
+        logger.error(
+            "pattern_analysis.file_access_error",
+            file_path=str(request.file_path),
+            error=str(e),
+            exc_info=True
         )
+        raise HTTPException(status_code=404, detail=str(e))
+        
+    except SyntaxError as e:
+        logger.error(
+            "pattern_analysis.syntax_error",
+            file_path=str(request.file_path),
+            error=str(e),
+            exc_info=True
+        )
+        raise HTTPException(status_code=422, detail=f"Syntax error: {str(e)}")
+        
     except PatternDetectionError as e:
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "error_code": "PATTERN_DETECTION_ERROR",
-                "message": str(e),
-                "details": e.details if hasattr(e, 'details') else None
-            }
+        logger.error(
+            "pattern_analysis.detection_error",
+            file_path=str(request.file_path),
+            error=str(e),
+            exc_info=True
         )
+        raise HTTPException(status_code=500, detail=str(e))
+        
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "error_code": "INTERNAL_SERVER_ERROR",
-                "message": "An unexpected error occurred",
-                "details": str(e)
-            }
+        logger.error(
+            "pattern_analysis.unexpected_error",
+            file_path=str(request.file_path),
+            error=str(e),
+            exc_info=True
         )
+        raise HTTPException(status_code=500, detail=str(e))

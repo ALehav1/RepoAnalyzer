@@ -1,0 +1,22 @@
+[
+  {
+    "id": "1",
+    "name": "react",
+    "description": "A declarative, efficient, and flexible JavaScript library for building user interfaces.",
+    "url": "https://github.com/facebook/react",
+    "stars": 203000,
+    "forks": 42000,
+    "lastAnalyzed": "2025-02-03",
+    "status": "success"
+  },
+  {
+    "id": "2",
+    "name": "typescript",
+    "description": "TypeScript is a superset of JavaScript that compiles to clean JavaScript output.",
+    "url": "https://github.com/microsoft/typescript",
+    "stars": 92000,
+    "forks": 12000,
+    "lastAnalyzed": "2025-02-03",
+    "status": "success"
+  }
+]
