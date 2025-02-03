@@ -20,6 +20,7 @@ class Settings(BaseSettings):
         OUTPUT_DIR: Directory for outputs
         VECTOR_STORE_DIR: Directory for ChromaDB vector store
         REPOS_DIR: Directory for cloned repositories
+        CHROMADB_PATH: Directory for ChromaDB
     """
     
     # API Keys
@@ -55,11 +56,17 @@ class Settings(BaseSettings):
         description="Directory for cloned repositories",
         env="REPOS_DIR"
     )
+    CHROMADB_PATH: str = Field(
+        default="chromadb",
+        description="Directory for ChromaDB",
+        env="CHROMADB_PATH"
+    )
 
     class Config:
         """Pydantic settings configuration."""
         env_file = ".env"
         case_sensitive = True
+        extra = "allow"  # Allow extra fields in environment variables
 
 
 # Initialize settings

@@ -1,4 +1,4 @@
-"""Path management for the application."""
+"""Path utilities for the application."""
 from pathlib import Path
 from typing import Dict
 import logging
@@ -6,21 +6,21 @@ from .config import settings
 
 logger = logging.getLogger(__name__)
 
-# Base directory (parent of src/)
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-# Data directories
-DATA_DIR = BASE_DIR / "data"
-REPO_STORAGE_DIR = DATA_DIR / settings.REPO_STORAGE_PATH
+# Base directories
+ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+DATA_DIR = ROOT_DIR / "data"
+REPO_STORAGE_DIR = DATA_DIR / settings.REPOS_DIR
 CHROMA_DB_DIR = DATA_DIR / settings.CHROMADB_PATH
 OUTPUT_DIR = DATA_DIR / settings.OUTPUT_DIR
+VECTOR_STORE_DIR = DATA_DIR / settings.VECTOR_STORE_DIR
 
 # Dictionary of all managed directories
 MANAGED_DIRS: Dict[str, Path] = {
     "data": DATA_DIR,
     "repos": REPO_STORAGE_DIR,
     "chroma_db": CHROMA_DB_DIR,
-    "output": OUTPUT_DIR
+    "output": OUTPUT_DIR,
+    "vector_store": VECTOR_STORE_DIR
 }
 
 def ensure_dirs() -> None:

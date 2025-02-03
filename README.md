@@ -261,6 +261,171 @@ frontend/
 │   └── App.tsx             # Root component
 ```
 
+## Project Organization and Conventions
+
+### File Organization
+
+1. **Component Structure**
+   - Components are organized by feature/domain in the `src/components` directory
+   - Shared components go in `src/components/shared`
+   - Layout components go in `src/components/layout`
+   - Feature-specific components go in their respective feature directories (e.g., `src/components/analysis`)
+
+2. **File Naming Conventions**
+   - Use PascalCase for component files (e.g., `ErrorBoundary.tsx`, `FileExplorer.tsx`)
+   - Use kebab-case for utility files (e.g., `api-client.ts`)
+   - Test files should match their component name with `.test` suffix (e.g., `ErrorBoundary.test.tsx`)
+   - Avoid duplicate files with different casing (e.g., NO `file-tree.tsx` AND `FileTree.tsx`)
+
+3. **Component Organization**
+   ```
+   src/
+   ├── components/
+   │   ├── shared/           # Shared components (ErrorBoundary, Loading, etc.)
+   │   ├── layout/          # Layout components (Navbar, Sidebar, etc.)
+   │   ├── analysis/        # Analysis feature components
+   │   │   ├── FileExplorer.tsx
+   │   │   └── AnalysisCharts.tsx
+   │   └── repo/           # Repository feature components
+   │       ├── CodeViewer.tsx
+   │       └── RepoCard.tsx
+   ├── pages/              # Page components
+   ├── hooks/              # Custom hooks
+   ├── utils/              # Utility functions
+   └── api/                # API client and types
+   ```
+
+4. **Component Locations**
+   - `ErrorBoundary`: `src/components/shared/ErrorBoundary.tsx`
+   - `FileExplorer`: `src/components/analysis/FileExplorer.tsx`
+   - `CodeViewer`: `src/components/repo/CodeViewer.tsx`
+   - `AnalysisCharts`: `src/components/analysis/AnalysisCharts.tsx`
+
+### Component Guidelines
+
+1. **Component Naming**
+   - Use PascalCase for component names
+   - Be descriptive and specific (e.g., `RepositoryAnalysisChart` instead of just `Chart`)
+   - Prefix test files with component name (e.g., `FileExplorer.test.tsx`)
+
+2. **File Structure**
+   - One component per file (except for small, tightly coupled helper components)
+   - Export components as named exports (except for default page components)
+   - Keep components focused and single-responsibility
+
+3. **Import Organization**
+   - Group imports by type (React, third-party, internal)
+   - Use absolute imports for project files
+   - Maintain consistent import ordering
+
+## Development Setup
+
+### Prerequisites
+- Python 3.11+
+- Node.js 18+
+- SQLite 3
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/RepoAnalyzer.git
+cd RepoAnalyzer
+```
+
+2. Backend Setup:
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: .\venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env  # Configure your environment variables
+```
+
+3. Frontend Setup:
+```bash
+cd frontend
+npm install
+cp .env.example .env  # Configure your environment variables
+```
+
+### Database Setup
+
+The application uses SQLite as its database. The database file is located at:
+```
+backend/data/repo_analyzer.db
+```
+
+To initialize the database:
+```bash
+cd backend
+alembic upgrade head
+```
+
+### Configuration Files
+
+#### Backend (.env)
+```env
+# API Keys
+OPENAI_API_KEY=your_openai_key
+GITHUB_TOKEN=your_github_token
+
+# Server Configuration
+HOST=0.0.0.0
+PORT=3000
+DEBUG=False
+LOG_LEVEL=INFO
+
+# Database
+DATABASE_URL=sqlite+aiosqlite:///./data/repo_analyzer.db
+
+# Directories
+OUTPUT_DIR=outputs
+VECTOR_STORE_DIR=vector_store
+REPOS_DIR=repos
+```
+
+#### Frontend (.env)
+```env
+VITE_BACKEND_URL=http://localhost:3000
+```
+
+## Project Structure
+
+### Backend Structure
+```
+backend/
+├── alembic/                    # Database migrations
+├── src/                        # Source code
+│   ├── api/                    # API endpoints and routes
+│   │   ├── routes/            # Route handlers
+│   │   └── middleware/        # API middleware (error handling, metrics)
+│   ├── core/                  # Core functionality
+│   │   ├── config.py         # Configuration management
+│   │   └── logging.py        # Logging configuration
+│   ├── models/               # Database models
+│   ├── schemas/              # Pydantic schemas
+│   ├── services/            # Business logic
+│   └── utils/               # Utility functions
+├── tests/                   # Test files (mirrors src structure)
+└── data/                    # Data storage
+    └── repo_analyzer.db    # SQLite database
+```
+
+### Frontend Structure
+```
+frontend/
+├── src/
+│   ├── components/          # React components
+│   │   ├── Layout/         # Layout components
+│   │   │   └── ErrorBoundary.tsx  # Global error handling
+│   │   └── common/         # Shared components
+│   ├── pages/              # Page components
+│   ├── hooks/              # Custom React hooks
+│   ├── utils/              # Utility functions
+│   └── App.tsx             # Root component
+```
+
 ## Development Guidelines
 
 ### File Organization

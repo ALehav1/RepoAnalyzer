@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Notifications } from '@mantine/notifications';
 import { useState } from 'react';
 import { AppShell } from '@mantine/core';
-import ErrorBoundary from './components/ErrorBoundary';
+import ErrorBoundary from './components/layout/ErrorBoundary';
 import AppNavbar from './components/layout/AppNavbar';
 import HomePage from './pages/HomePage';
 import SavedReposPage from './pages/SavedReposPage';
