@@ -126,7 +126,35 @@ frontend/
 │     └─ ChatPage.tsx
 ```
 
-### 3. Theme Configuration
+### 3. Repository Analysis Flow
+
+```mermaid
+graph LR
+    A[Git Clone] --> B[File Analysis]
+    B --> C{Language Detection}
+    C -->|Python| D[AST Analysis]
+    C -->|Other| E[Basic Analysis]
+    D --> F[Pattern Detection]
+    E --> F
+    F --> G[Vector Embedding]
+    G --> H[Store Results]
+    H --> I[Generate Report]
+```
+
+### 4. Chat System Architecture
+
+```mermaid
+graph TB
+    A[User Input] --> B[Chat Router]
+    B --> C[Chat Service]
+    C --> D[Context Builder]
+    D --> E[Vector Store]
+    E --> F[LLM Service]
+    F --> G[Response Generator]
+    G --> H[User Interface]
+```
+
+### 5. Theme Configuration
 
 ```typescript
 // theme.ts
@@ -154,40 +182,40 @@ export const theme = {
 };
 ```
 
-### 4. Interactive Elements
+### 6. Interactive Elements
 
-#### 4.1 Core Components
+#### 6.1 Core Components
 
 - **Buttons**: Primary (filled), Secondary (outline)
 - **Tabs**: Repository detail sections
 - **Modals**: Advanced settings, bulk uploads
 - **Progress/Loader**: Analysis progress indicators
 
-#### 4.2 Animations
+#### 6.2 Animations
 
 - Subtle transitions for tab changes
 - Hover states
 - Modal animations
 - Loading states
 
-### 5. Data Visualization
+### 7. Data Visualization
 
-#### 5.1 Chart Types
+#### 7.1 Chart Types
 
 - Language distribution (Bar/Pie)
 - Pattern frequency (Radial/Bar)
 - Code quality metrics (Line/Radar)
 - File size distribution (Treemap)
 
-#### 5.2 Libraries
+#### 7.2 Libraries
 
 - @nivo/pie, @nivo/bar
 - react-chartjs-2
 - D3.js for custom visualizations
 
-### 6. Responsive Design
+### 8. Responsive Design
 
-#### 6.1 Breakpoints
+#### 8.1 Breakpoints
 
 - xs: < 576px
 - sm: < 768px
@@ -195,43 +223,43 @@ export const theme = {
 - lg: < 1200px
 - xl: ≥ 1200px
 
-#### 6.2 Mobile Adaptations
+#### 8.2 Mobile Adaptations
 
 - Collapsible navigation
 - Single-column layouts
 - Touch-friendly interactions
 - Optimized charts
 
-### 7. User Flows
+### 9. User Flows
 
-#### 7.1 Repository Analysis
+#### 9.1 Repository Analysis
 
 1. Input GitHub URL
 2. View analysis progress
 3. Navigate to results
 
-#### 7.2 Repository Exploration
+#### 9.2 Repository Exploration
 
 1. Browse saved repositories
 2. Filter/search functionality
 3. Detailed view navigation
 
-#### 7.3 Pattern Discovery
+#### 9.3 Pattern Discovery
 
 1. View pattern library
 2. Examine usage examples
 3. Copy pattern implementations
 
-### 8. Accessibility
+### 10. Accessibility
 
-#### 8.1 Core Requirements
+#### 10.1 Core Requirements
 
 - ARIA labels for interactive elements
 - Keyboard navigation support
 - Color contrast compliance
 - Screen reader compatibility
 
-#### 8.2 Implementation
+#### 10.2 Implementation
 
 - Semantic HTML structure
 - Focus management
@@ -264,6 +292,67 @@ export const theme = {
   - [ ] ARIA implementation
   - [ ] Keyboard support
   - [ ] Screen reader testing
+
+## System Architecture
+
+### 1. Backend Architecture
+
+```mermaid
+graph TB
+    subgraph Frontend
+        UI[User Interface]
+        API_Client[API Client]
+    end
+
+    subgraph Backend
+        subgraph API_Layer[API Layer]
+            FastAPI[FastAPI Server]
+            CORS[CORS Middleware]
+            Auth[Auth Middleware]
+            Routes[API Routes]
+        end
+
+        subgraph Core_Services[Core Services]
+            RepoService[Repository Service]
+            AnalysisService[Analysis Service]
+            ChatService[Chat Service]
+            PatternService[Pattern Service]
+        end
+
+        subgraph Data_Layer[Data Layer]
+            DB[(SQLite Database)]
+            VectorStore[Vector Store]
+            FileSystem[File System]
+        end
+    end
+
+    UI --> API_Client
+    API_Client --> FastAPI
+    FastAPI --> CORS
+    CORS --> Routes
+    Routes --> Core_Services
+    Core_Services --> Data_Layer
+```
+
+### 2. Request Flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant CORS
+    participant Router
+    participant Service
+    participant Database
+
+    Client->>CORS: HTTP Request
+    CORS->>Router: Validated Request
+    Router->>Service: Process Request
+    Service->>Database: Query/Update
+    Database-->>Service: Response
+    Service-->>Router: Processed Data
+    Router-->>CORS: API Response
+    CORS-->>Client: HTTP Response
+```
 
 ## File Structure Notes
 
@@ -579,35 +668,303 @@ Example response:
 
 The application uses a centralized error handling system:
 
-1. Backend:
-   - Custom `AppError` class for application-specific errors
-   - Global error handling middleware
-   - Detailed error logging with stack traces
-2. Frontend:
-   - Error boundary components for React component errors
-   - Axios interceptors for API error handling
-   - TypeScript interfaces for type safety
+1. **Input Validation**
 
-## System Flow Diagrams
+   - File path validation
+   - File extension checking
+   - Required field validation
 
-> Note: These diagrams are conceptual and may not reflect the exact implementation. They are meant to provide a high-level understanding of the system's architecture and data flow.
+2. **Custom Exceptions**
 
-### Repository Analysis Flow
+   - `PatternDetectionError`: Pattern analysis failures
+   - `FileAccessError`: File access issues
+   - Proper error codes and messages
 
-```mermaid
-graph TD
-    A[User Input] --> B[Repository URL]
-    B --> C[Clone Repository]
-    C --> D[File Analysis]
-    D --> E[Pattern Detection]
-    D --> F[Code Quality]
-    D --> G[Documentation]
-    E & F & G --> H[Generate Report]
-    H --> I[Store Results]
-    I --> J[Display Analysis]
+3. **HTTP Status Codes**
+   - 200: Successful operation
+   - 400: Invalid input or file access error
+   - 422: Request validation error
+   - 500: Pattern detection or server error
+
+### Error Messages and Solutions
+
+| Error               | Cause                     | Solution                                        |
+| ------------------- | ------------------------- | ----------------------------------------------- |
+| `ECONNREFUSED`      | API server down           | Check if backend is running and port is correct |
+| `Invalid token`     | Expired/invalid JWT       | Re-authenticate or check token expiration       |
+| `MemoryError`       | Large repository analysis | Increase memory limit or use chunked processing |
+| `Too many requests` | Rate limiting             | Implement request queuing or increase limits    |
+
+### Health Checks
+
+```bash
+# Backend Health
+curl http://localhost:8000/health
+
+# Database Health
+python scripts/check_db.py
+
+# Redis Health
+redis-cli ping
+
+# Frontend Build Health
+npm run build
 ```
 
-### Pattern Detection Flow
+### Additional API Endpoints
+
+#### Files and Code
+
+##### GET /repos/{id}/files
+
+Get repository file structure.
+
+Query Parameters:
+
+- `path`: string (optional, defaults to root)
+- `depth`: int (optional, defaults to 1)
+
+Response:
+
+```json
+{
+  "files": [
+    {
+      "name": "string",
+      "path": "string",
+      "type": "file|directory",
+      "size": 0,
+      "lastModified": "2025-02-03T12:59:01Z",
+      "children": []
+    }
+  ]
+}
+```
+
+##### GET /repos/{id}/file-content
+
+Get file content.
+
+Query Parameters:
+
+- `path`: string (required)
+- `highlight`: boolean (optional, syntax highlighting)
+- `lines`: string (optional, e.g., "1-100")
+
+Response:
+
+```json
+{
+  "content": "string",
+  "language": "string",
+  "lines": {
+    "start": 0,
+    "end": 0
+  }
+}
+```
+
+#### Analysis
+
+##### POST /repos/{id}/analyze/patterns
+
+Analyze specific patterns.
+
+Request:
+
+```json
+{
+  "patterns": ["Factory", "Singleton"],
+  "files": ["src/**/*.ts"]
+}
+```
+
+Response:
+
+```json
+{
+  "taskId": "string",
+  "status": "pending"
+}
+```
+
+##### GET /repos/{id}/analyze/status/{taskId}
+
+Get analysis task status.
+
+Response:
+
+```json
+{
+  "status": "pending|running|completed|failed",
+  "progress": 0,
+  "message": "string",
+  "result": {}
+}
+```
+
+#### Metrics
+
+##### GET /repos/{id}/metrics/history
+
+Get historical metrics.
+
+Query Parameters:
+
+- `from`: string (ISO date)
+- `to`: string (ISO date)
+- `metrics`: string[] (comma-separated)
+
+Response:
+
+```json
+{
+  "metrics": [
+    {
+      "date": "2025-02-03T12:59:01Z",
+      "values": {
+        "complexity": 75,
+        "maintainability": 85
+      }
+    }
+  ]
+}
+```
+
+##### POST /repos/{id}/metrics/custom
+
+Calculate custom metrics.
+
+Request:
+
+```json
+{
+  "metrics": [
+    {
+      "name": "string",
+      "rule": "string",
+      "threshold": 0
+    }
+  ]
+}
+```
+
+### Additional Configuration
+
+#### Vite Configuration (vite.config.ts)
+
+```typescript
+export default defineConfig({
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8888',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/api/, ''),
+      },
+    },
+  },
+  build: {
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          charts: ['chart.js', '@nivo/core'],
+        },
+      },
+    },
+  },
+});
+```
+
+#### TypeScript Configuration (tsconfig.json)
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
+```
+
+#### PM2 Configuration (ecosystem.config.js)
+
+```javascript
+module.exports = {
+  apps: [
+    {
+      name: 'repo-analyzer-api',
+      script: 'backend/start_server.py',
+      interpreter: 'python',
+      env: {
+        NODE_ENV: 'development',
+      },
+      env_production: {
+        NODE_ENV: 'production',
+      },
+      watch: true,
+      ignore_watch: ['node_modules', 'logs'],
+      max_memory_restart: '1G',
+    },
+    {
+      name: 'repo-analyzer-frontend',
+      script: 'npm',
+      args: 'run dev',
+      env: {
+        NODE_ENV: 'development',
+      },
+      env_production: {
+        NODE_ENV: 'production',
+      },
+    },
+  ],
+};
+```
+
+### Additional Flow Diagrams
+
+#### Authentication Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend
+    participant G as GitHub
+
+    U->>F: Click Login
+    F->>G: Redirect to GitHub
+    G->>F: Return with code
+    F->>B: POST /auth/login
+    B->>G: Exchange code for token
+    G->>B: Return access token
+    B->>B: Generate JWT
+    B->>F: Return JWT
+    F->>U: Show authenticated state
+```
+
+#### File Analysis Flow
 
 ```mermaid
 graph TD
@@ -625,7 +982,7 @@ graph TD
     J --> K[Store Results]
 ```
 
-### Caching Strategy
+#### Caching Strategy
 
 ```mermaid
 graph TD
@@ -639,7 +996,7 @@ graph TD
     H -->|Stale| I[Background Refresh]
 ```
 
-### Error Handling Flow
+#### Error Handling Flow
 
 ```mermaid
 graph TD
@@ -655,7 +1012,7 @@ graph TD
     H --> I[Recovery Action]
 ```
 
-### Data Flow
+#### Data Flow
 
 ```mermaid
 graph TD
@@ -779,10 +1136,15 @@ RepoAnalyzer/
 ├── backend/                 # FastAPI backend
 │   ├── src/                # Main backend source code
 │   │   ├── api/            # API endpoints
-│   │   ├── models/         # Database models
-│   │   ├── services/       # Business logic
-│   │   └── schemas/        # Pydantic schemas
-│   ├── tests/              # Backend tests
+│   │   │   ├── routes/       # Route handlers
+│   │   │   └── schemas/      # API request/response schemas
+│   │   ├── core/             # Core functionality
+│   │   ├── middleware/       # Application middleware
+│   │   │   └── error_handler.py  # Error handling middleware
+│   │   ├── models/           # Database models
+│   │   ├── schemas/          # Pydantic schemas
+│   │   └── services/         # Business logic
+│   ├── tests/                # Backend tests
 │   ├── alembic/            # Database migrations
 │   ├── scripts/            # Utility scripts
 │   ├── middleware/         # Custom middleware
@@ -791,17 +1153,15 @@ RepoAnalyzer/
 │   ├── src/
 │   │   ├── api/           # API client
 │   │   ├── components/    # React components
-│   │   ├── hooks/         # Custom hooks
-│   │   ├── pages/         # Page components
-│   │   ├── services/      # Frontend services
-│   │   └── types/         # TypeScript types
-│   └── __tests__/         # Frontend tests
-├── cypress/                # E2E tests
-│   ├── e2e/               # Test specs
-│   └── fixtures/          # Test data
-├── docs/                   # Documentation
-├── rules/                  # Analysis rules
-└── data/                  # Data storage
+│   │   │   ├── shared/     # Shared components
+│   │   │   ├── layout/     # Layout components
+│   │   │   ├── analysis/   # Analysis components
+│   │   │   └── repo/       # Repository components
+│   │   ├── pages/          # Page components
+│   │   ├── hooks/          # Custom React hooks
+│   │   └── utils/          # Utility functions
+│   └── tests/              # Frontend tests
+└── docs/                   # Documentation
 ```
 
 ## Setup and Installation
@@ -1312,18 +1672,12 @@ Request:
 
 ```typescript
 export default defineConfig({
-  plugins: [react()],
   server: {
-    port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'http://localhost:8888',
         changeOrigin: true,
         rewrite: path => path.replace(/^\/api/, ''),
-      },
-      '/ws': {
-        target: 'ws://localhost:8000',
-        ws: true,
       },
     },
   },
@@ -1475,7 +1829,22 @@ graph TD
     H --> I[Recovery Action]
 ```
 
-### Troubleshooting Guide
+#### Data Flow
+
+```mermaid
+graph TD
+    A[Frontend] -->|HTTP/WS| B[API Gateway]
+    B --> C[FastAPI Backend]
+    C -->|Read/Write| D[(PostgreSQL)]
+    C -->|Cache| E[(Redis)]
+    C -->|Clone| F[Git Repos]
+    C -->|Analyze| G[Pattern Engine]
+    G -->|Detect| H[Code Patterns]
+    G -->|Generate| I[Metrics]
+    C -->|Query| J[OpenAI API]
+```
+
+## Troubleshooting Guide
 
 #### Common Issues
 
