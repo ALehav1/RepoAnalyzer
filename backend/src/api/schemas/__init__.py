@@ -4,7 +4,7 @@ from .repository import (
     RepositoryBase,
     RepositoryCreate,
     Repository,
-    RepositoryAnalysisResponse,
+    AnalysisResponse,
     RepositoryStructureResponse,
 )
 from .file_analysis import FileAnalysisBase, FileAnalysisCreate, FileAnalysis
@@ -15,7 +15,7 @@ __all__ = [
     'RepositoryBase',
     'RepositoryCreate',
     'Repository',
-    'RepositoryAnalysisResponse',
+    'AnalysisResponse',
     'RepositoryStructureResponse',
     'FileAnalysisBase',
     'FileAnalysisCreate',

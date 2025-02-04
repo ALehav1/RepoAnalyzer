@@ -1,4 +1,4 @@
-import { Navbar, NavLink, ActionIcon, useMantineColorScheme, Group, Text } from '@mantine/core';
+import { AppShell, NavLink, ActionIcon, useMantineColorScheme, Group, Text } from '@mantine/core';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { IconHome, IconDatabase, IconBulb, IconMessage, IconSun, IconMoon } from '@tabler/icons-react';
 
@@ -15,32 +15,34 @@ export default function AppNavbar() {
   ];
 
   return (
-    <Navbar width={{ base: 300 }} p="xs">
-      <Navbar.Section grow>
+    <AppShell.Navbar p="xs" width={{ base: 300 }}>
+      <AppShell.Section grow>
         {navItems.map((item) => (
           <NavLink
             key={item.path}
             label={item.label}
-            icon={item.icon}
+            leftSection={item.icon}
             active={location.pathname === item.path}
             onClick={() => navigate(item.path)}
           />
         ))}
-      </Navbar.Section>
+      </AppShell.Section>
 
-      <Navbar.Section>
-        <Group position="apart" px="sm" py="md">
-          <Text size="sm">Theme</Text>
+      <AppShell.Section>
+        <Group justify="center" py="md">
           <ActionIcon
             variant="default"
             onClick={() => toggleColorScheme()}
-            size={30}
+            size="lg"
             aria-label="Toggle color scheme"
           >
-            {colorScheme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
+            {colorScheme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
           </ActionIcon>
+          <Text size="sm" c="dimmed">
+            {colorScheme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          </Text>
         </Group>
-      </Navbar.Section>
-    </Navbar>
+      </AppShell.Section>
+    </AppShell.Navbar>
   );
 }

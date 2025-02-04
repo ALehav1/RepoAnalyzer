@@ -1,82 +1,110 @@
-import { Card, Text, Button, Group, Badge } from '@mantine/core';
-import { useNavigate } from 'react-router-dom';
-import { IconBrandGithub, IconGitBranch, IconStar } from '@tabler/icons-react';
-
-export interface Repository {
-  id: string;
-  name: string;
-  description: string;
-  url: string;
-  stars: number;
-  forks: number;
-  lastAnalyzed: string;
-  status: 'success' | 'pending' | 'error';
-}
+import { Card, Text, Group, Badge, Progress, ActionIcon, Stack, ThemeIcon } from '@mantine/core';
+import { IconBrandGithub, IconGitBranch, IconStar, IconEye } from '@tabler/icons-react';
 
 interface RepoCardProps {
-  repo: Repository;
+  name: string;
+  description: string;
+  stars: number;
+  watchers: number;
+  forks: number;
+  codeQuality: number;
+  patterns: number;
+  lastAnalyzed: string;
+  onClick: () => void;
 }
 
-export default function RepoCard({ repo }: RepoCardProps) {
-  const navigate = useNavigate();
-
-  const statusColor = {
-    success: 'green',
-    pending: 'yellow',
-    error: 'red',
-  }[repo.status];
+export function RepoCard({
+  name,
+  description,
+  stars,
+  watchers,
+  forks,
+  codeQuality,
+  patterns,
+  lastAnalyzed,
+  onClick,
+}: RepoCardProps) {
+  const getQualityColor = (score: number) => {
+    if (score >= 80) return 'teal';
+    if (score >= 60) return 'yellow';
+    return 'red';
+  };
 
   return (
-    <Card shadow="sm" padding="lg" radius="md" withBorder>
-      <Group position="apart" mb="xs">
-        <Text weight={500} size="lg">{repo.name}</Text>
-        <Badge color={statusColor}>{repo.status}</Badge>
-      </Group>
+    <Card
+      shadow="sm"
+      padding="lg"
+      radius="md"
+      withBorder
+      sx={(theme) => ({
+        backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[6] : theme.white,
+        cursor: 'pointer',
+        transition: 'transform 150ms ease, box-shadow 150ms ease',
+        '&:hover': {
+          transform: 'translateY(-5px)',
+          boxShadow: theme.shadows.md,
+        },
+      })}
+      onClick={onClick}
+    >
+      <Stack spacing="md">
+        <Group position="apart">
+          <Group>
+            <ThemeIcon 
+              size={40} 
+              radius="md" 
+              variant="light" 
+              color="brand"
+            >
+              <IconBrandGithub size={20} />
+            </ThemeIcon>
+            <div>
+              <Text weight={500} size="lg">
+                {name}
+              </Text>
+              <Text size="sm" color="dimmed" lineClamp={2}>
+                {description}
+              </Text>
+            </div>
+          </Group>
+        </Group>
 
-      <Text size="sm" color="dimmed" mb="md">
-        {repo.description}
-      </Text>
+        <Group spacing={30}>
+          <Group spacing={4}>
+            <IconStar size={16} />
+            <Text size="sm">{stars}</Text>
+          </Group>
+          <Group spacing={4}>
+            <IconEye size={16} />
+            <Text size="sm">{watchers}</Text>
+          </Group>
+          <Group spacing={4}>
+            <IconGitBranch size={16} />
+            <Text size="sm">{forks}</Text>
+          </Group>
+        </Group>
 
-      <Group spacing="xs" mb="md">
-        <Group spacing={4}>
-          <IconStar size={16} />
-          <Text size="sm" color="dimmed">
-            {repo.stars.toLocaleString()}
+        <Stack spacing="xs">
+          <Group position="apart">
+            <Text size="sm">Code Quality</Text>
+            <Badge color={getQualityColor(codeQuality)}>{codeQuality}%</Badge>
+          </Group>
+          <Progress 
+            value={codeQuality} 
+            color={getQualityColor(codeQuality)}
+            size="sm"
+          />
+        </Stack>
+
+        <Group position="apart">
+          <Badge variant="light" color="brand">
+            {patterns} Patterns Detected
+          </Badge>
+          <Text size="xs" color="dimmed">
+            Last analyzed: {lastAnalyzed}
           </Text>
         </Group>
-        <Group spacing={4}>
-          <IconGitBranch size={16} />
-          <Text size="sm" color="dimmed">
-            {repo.forks.toLocaleString()}
-          </Text>
-        </Group>
-      </Group>
-
-      <Text size="xs" color="dimmed" mb="md">
-        Last analyzed: {new Date(repo.lastAnalyzed).toLocaleDateString()}
-      </Text>
-
-      <Group position="apart">
-        <Button 
-          variant="light" 
-          color="blue" 
-          onClick={() => navigate(`/repo/${repo.id}`)}
-          fullWidth
-        >
-          View Analysis
-        </Button>
-        <Button 
-          variant="subtle"
-          color="gray"
-          component="a"
-          href={repo.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          leftIcon={<IconBrandGithub size={16} />}
-        >
-          View on GitHub
-        </Button>
-      </Group>
+      </Stack>
     </Card>
   );
 }

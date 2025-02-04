@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000',
+  baseURL: 'http://localhost:8888',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -50,6 +50,15 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+}
+
+export interface HealthStatus {
+  status: string;
+  components: {
+    database: {
+      status: string;
+    };
+  };
 }
 
 export const repositoryApi = {
@@ -110,6 +119,11 @@ export const repositoryApi = {
     const response = await api.post<Message>(`/api/repositories/${id}/chat`, {
       content,
     });
+    return response.data;
+  },
+
+  async checkHealth(): Promise<HealthStatus> {
+    const response = await api.get<HealthStatus>('/api/health');
     return response.data;
   },
 };

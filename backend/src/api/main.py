@@ -9,12 +9,13 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
-from .routes import chat, practices, repositories
+from .routes import chat, repositories
 from .schemas.health import HealthResponse, ComponentStatus
 from ..utils.logging import setup_logging
 from ..middleware.error_handler import handle_errors, AppError
 from ..database import get_db, engine, init_db
 from ..models.base import Base
+from ..core.config import get_settings
 
 # Set up logging
 setup_logging()
@@ -27,10 +28,14 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS
+# Initialize settings
+settings = get_settings()
+
+# Configure CORS directly
+logger.debug("Setting up CORS with hardcoded origins")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=["http://localhost:3000", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -49,7 +54,6 @@ app.add_middleware(BaseHTTPMiddleware, dispatch=handle_errors)
 # Include routers
 app.include_router(repositories.router, prefix="/api/repositories", tags=["repositories"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
-app.include_router(practices.router, prefix="/api/practices", tags=["practices"])
 
 @app.on_event("startup")
 def startup():
@@ -85,11 +89,26 @@ async def health_check(db: AsyncSession = Depends(get_db)):
         
         return HealthResponse(
             status="healthy",
-            components='{"database": "connected"}'
+            components={
+                "database": ComponentStatus(
+                    status="healthy",
+                    details="Connected successfully"
+                )
+            }
         )
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail="Health check failed"
+        return HealthResponse(
+            status="unhealthy",
+            components={
+                "database": ComponentStatus(
+                    status="unhealthy",
+                    details=str(e)
+                )
+            }
         )
+
+@app.get("/")
+async def root():
+    """Root endpoint."""
+    return {"message": "Welcome to RepoAnalyzer API"}

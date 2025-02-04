@@ -237,3 +237,50 @@ async def get_repo_chat_history(
             exc_info=True
         )
         raise
+
+"""Chat routes for the API."""
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
+from pydantic import BaseModel
+from datetime import datetime
+
+from ...database import get_db
+from ...services.chat import ChatService
+from ...core.logging import get_logger
+
+logger = get_logger(__name__)
+router = APIRouter()
+
+class ChatMessage(BaseModel):
+    """Schema for chat messages."""
+    message: str
+    repository_id: str
+
+class ChatResponse(BaseModel):
+    """Schema for chat responses."""
+    response: str
+    timestamp: datetime = datetime.now()
+
+@router.post("/", response_model=ChatResponse)
+async def chat_with_repo(
+    message: ChatMessage,
+    db: AsyncSession = Depends(get_db)
+) -> ChatResponse:
+    """Chat with the repository."""
+    try:
+        chat_service = ChatService(db)
+        response = await chat_service.create_message(
+            repository_id=message.repository_id,
+            content=message.message
+        )
+        return ChatResponse(
+            response=response.content,
+            timestamp=response.timestamp
+        )
+    except Exception as e:
+        logger.error(f"Error processing chat message: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to process chat message: {str(e)}"
+        )

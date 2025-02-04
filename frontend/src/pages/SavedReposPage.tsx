@@ -1,117 +1,142 @@
 import { useState } from 'react';
-import { 
-  Text, 
-  Grid, 
-  Group, 
-  Select, 
+import {
+  Text,
+  Grid,
+  Group,
+  Select,
   TextInput,
   Stack,
-  Paper
+  Paper,
+  Container,
+  Title,
+  Skeleton,
+  Center,
+  Button,
 } from '@mantine/core';
-import { IconSearch } from '@tabler/icons-react';
-import RepoCard, { Repository } from '../components/repo/RepoCard';
-
-// Mock data - replace with actual API call
-const mockRepos: Repository[] = [
-  {
-    id: '1',
-    name: 'react',
-    description: 'A declarative, efficient, and flexible JavaScript library for building user interfaces.',
-    url: 'https://github.com/facebook/react',
-    stars: 203000,
-    forks: 42000,
-    lastAnalyzed: '2025-02-03',
-    status: 'success'
-  },
-  {
-    id: '2',
-    name: 'typescript',
-    description: 'TypeScript is a superset of JavaScript that compiles to clean JavaScript output.',
-    url: 'https://github.com/microsoft/typescript',
-    stars: 92000,
-    forks: 12000,
-    lastAnalyzed: '2025-02-03',
-    status: 'pending'
-  }
-];
+import { IconSearch, IconArrowsSort } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
+import { RepoCard } from '../components/repo/RepoCard';
+import { useQuery } from '@tanstack/react-query';
+import repoApi from '../api/repoApi';
+import { notifications } from '@mantine/notifications';
 
 export default function SavedReposPage() {
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
-  const [sortBy, setSortBy] = useState<string | null>('lastAnalyzed');
-  const [statusFilter, setStatusFilter] = useState<string | null>('all');
+  const [sortBy, setSortBy] = useState<string>('lastAnalyzed');
 
-  // Filter and sort repositories
-  const filteredRepos = mockRepos
-    .filter(repo => {
-      const matchesSearch = repo.name.toLowerCase().includes(search.toLowerCase()) ||
-                          repo.description.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || repo.status === statusFilter;
-      return matchesSearch && matchesStatus;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case 'stars':
-          return b.stars - a.stars;
-        case 'forks':
-          return b.forks - a.forks;
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'lastAnalyzed':
-        default:
-          return new Date(b.lastAnalyzed).getTime() - new Date(a.lastAnalyzed).getTime();
-      }
-    });
+  const { data: repositories, isLoading, error } = useQuery({
+    queryKey: ['repositories'],
+    queryFn: repoApi.getRepositories,
+    onError: (error: any) => {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to load repositories. Please try again.',
+        color: 'red',
+      });
+    },
+  });
+
+  const filteredRepos = repositories?.filter((repo) =>
+    repo.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const sortedRepos = [...(filteredRepos || [])].sort((a, b) => {
+    switch (sortBy) {
+      case 'stars':
+        return b.stars - a.stars;
+      case 'forks':
+        return b.forks - a.forks;
+      case 'name':
+        return a.name.localeCompare(b.name);
+      case 'lastAnalyzed':
+      default:
+        return new Date(b.lastAnalyzed).getTime() - new Date(a.lastAnalyzed).getTime();
+    }
+  });
 
   return (
-    <Stack spacing="xl">
-      <Text size="xl" weight={700}>Saved Repositories</Text>
-
-      <Paper shadow="xs" p="md" withBorder>
-        <Group align="flex-end" spacing="md">
-          <TextInput
-            label="Search repositories"
-            placeholder="Search by name or description"
-            icon={<IconSearch size={14} />}
-            value={search}
-            onChange={(e) => setSearch(e.currentTarget.value)}
-            style={{ flex: 1 }}
-          />
-          
-          <Select
-            label="Status"
-            value={statusFilter}
-            onChange={setStatusFilter}
-            data={[
-              { value: 'all', label: 'All' },
-              { value: 'success', label: 'Success' },
-              { value: 'pending', label: 'Pending' },
-              { value: 'error', label: 'Error' }
-            ]}
-            style={{ width: 120 }}
-          />
-
-          <Select
-            label="Sort by"
-            value={sortBy}
-            onChange={setSortBy}
-            data={[
-              { value: 'lastAnalyzed', label: 'Last Analyzed' },
-              { value: 'stars', label: 'Stars' },
-              { value: 'forks', label: 'Forks' },
-              { value: 'name', label: 'Name' }
-            ]}
-            style={{ width: 150 }}
-          />
+    <Container size="xl">
+      <Stack spacing="xl">
+        <Group position="apart">
+          <Title order={2}>Saved Repositories</Title>
+          <Button
+            variant="light"
+            onClick={() => navigate('/')}
+            leftIcon={<IconSearch size={16} />}
+          >
+            Analyze New Repository
+          </Button>
         </Group>
-      </Paper>
 
-      <Grid>
-        {filteredRepos.map((repo) => (
-          <Grid.Col key={repo.id} xs={12} sm={6} lg={4}>
-            <RepoCard repo={repo} />
-          </Grid.Col>
-        ))}
-      </Grid>
-    </Stack>
+        <Paper p="md" radius="md" withBorder>
+          <Group>
+            <TextInput
+              placeholder="Search repositories..."
+              icon={<IconSearch size={16} />}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{ flexGrow: 1 }}
+            />
+            <Select
+              placeholder="Sort by"
+              value={sortBy}
+              onChange={(value) => setSortBy(value || 'lastAnalyzed')}
+              icon={<IconArrowsSort size={16} />}
+              data={[
+                { value: 'lastAnalyzed', label: 'Last Analyzed' },
+                { value: 'stars', label: 'Stars' },
+                { value: 'forks', label: 'Forks' },
+                { value: 'name', label: 'Name' },
+              ]}
+              sx={{ width: 200 }}
+            />
+          </Group>
+        </Paper>
+
+        {isLoading ? (
+          <Grid>
+            {[...Array(6)].map((_, i) => (
+              <Grid.Col key={i} span={12} sm={6} lg={4}>
+                <Skeleton height={200} radius="md" />
+              </Grid.Col>
+            ))}
+          </Grid>
+        ) : error ? (
+          <Center>
+            <Text color="dimmed">Failed to load repositories. Please try again.</Text>
+          </Center>
+        ) : sortedRepos?.length === 0 ? (
+          <Center>
+            <Stack align="center" spacing="xs">
+              <Text size="xl" weight={500} color="dimmed">
+                No repositories found
+              </Text>
+              <Text color="dimmed">
+                Start by analyzing a new repository from the home page
+              </Text>
+            </Stack>
+          </Center>
+        ) : (
+          <Grid>
+            {sortedRepos?.map((repo) => (
+              <Grid.Col key={repo.id} span={12} sm={6} lg={4}>
+                <RepoCard
+                  name={repo.name}
+                  description={repo.description}
+                  stars={repo.stars}
+                  watchers={0} // API doesn't provide watchers count yet
+                  forks={repo.forks}
+                  codeQuality={85} // We'll need to get this from metrics
+                  patterns={10} // We'll need to get this from patterns
+                  lastAnalyzed={repo.lastAnalyzed}
+                  onClick={() => navigate(`/repo/${repo.id}`)}
+                />
+              </Grid.Col>
+            ))}
+          </Grid>
+        )}
+      </Stack>
+    </Container>
   );
 }

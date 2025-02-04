@@ -1,115 +1,118 @@
-import { useState } from 'react';
-import { Group, Paper, ScrollArea, Stack, Text, Code } from '@mantine/core';
-import { useQuery } from '@tanstack/react-query';
-import { IconFolder, IconFile, IconChevronRight, IconChevronDown } from '@tabler/icons-react';
-import { repositoryApi } from '../../api/client';
-
-interface FileNode {
-  name: string;
-  path: string;
-  type: 'file' | 'directory';
-  children?: FileNode[];
-}
-
-interface FileTreeProps {
-  node: FileNode;
-  onSelect: (path: string) => void;
-  level: number;
-}
-
-function FileTree({ node, onSelect, level }: FileTreeProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const handleClick = () => {
-    if (node.type === 'directory') {
-      setIsOpen(!isOpen);
-    } else {
-      onSelect(node.path);
-    }
-  };
-
-  return (
-    <Stack gap={0}>
-      <Group 
-        gap="xs"
-        onClick={handleClick}
-        style={{ cursor: 'pointer', paddingLeft: level * 20 }}
-        py={4}
-      >
-        {node.type === 'directory' && (
-          isOpen ? <IconChevronDown size={16} /> : <IconChevronRight size={16} />
-        )}
-        {node.type === 'directory' ? (
-          <IconFolder size={16} color="#228be6" />
-        ) : (
-          <IconFile size={16} />
-        )}
-        <Text size="sm">{node.name}</Text>
-      </Group>
-      
-      {isOpen && node.children && (
-        <Stack gap={0}>
-          {node.children.map((child) => (
-            <FileTree
-              key={child.path}
-              node={child}
-              onSelect={onSelect}
-              level={level + 1}
-            />
-          ))}
-        </Stack>
-      )}
-    </Stack>
-  );
-}
+import { useState, useEffect } from 'react';
+import { Grid, Paper, Stack, Title, Text, Group, ThemeIcon, LoadingOverlay } from '@mantine/core';
+import { IconFileCode, IconAlertCircle } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
+import EnhancedFileExplorer from '../repo/EnhancedFileExplorer';
+import CodeViewer from '../repo/CodeViewer';
+import { repoApi, FileNode } from '../../api/repoApi';
 
 interface FileExplorerTabProps {
   repoId: string;
 }
 
-export function FileExplorerTab({ repoId }: FileExplorerTabProps) {
+export default function FileExplorerTab({ repoId }: FileExplorerTabProps) {
+  const [files, setFiles] = useState<FileNode[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [fileContent, setFileContent] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingFile, setIsLoadingFile] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { data: fileTree, isLoading } = useQuery({
-    queryKey: ['fileTree', repoId],
-    queryFn: () => repositoryApi.getFileTree(repoId),
-  });
+  useEffect(() => {
+    const fetchFileTree = async () => {
+      try {
+        setIsLoading(true);
+        const response = await repoApi.getFileTree(repoId);
+        setFiles(response.data);
+        setError(null);
+      } catch (error) {
+        console.error('Failed to fetch file tree:', error);
+        setError('Failed to load repository files');
+        notifications.show({
+          title: 'Error',
+          message: 'Failed to load repository files',
+          color: 'red',
+          icon: <IconAlertCircle size={16} />,
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const { data: fileContent, isLoading: isLoadingContent } = useQuery({
-    queryKey: ['fileContent', selectedFile],
-    queryFn: () => repositoryApi.getFileContent(repoId, selectedFile!),
-    enabled: !!selectedFile,
-  });
+    fetchFileTree();
+  }, [repoId]);
 
-  if (isLoading) {
-    return <Text>Loading file tree...</Text>;
-  }
+  const handleFileSelect = async (path: string) => {
+    try {
+      setIsLoadingFile(true);
+      setSelectedFile(path);
+      const response = await repoApi.getFileContent(repoId, path);
+      setFileContent(response.data.content);
+      setError(null);
+    } catch (error) {
+      console.error('Failed to fetch file content:', error);
+      setError('Failed to load file content');
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to load file content',
+        color: 'red',
+        icon: <IconAlertCircle size={16} />,
+      });
+    } finally {
+      setIsLoadingFile(false);
+    }
+  };
 
   return (
-    <Group grow align="flex-start" mt="xl">
-      <Paper withBorder p="md" style={{ height: 'calc(100vh - 200px)' }}>
-        <ScrollArea h="100%">
-          <FileTree
-            node={fileTree!}
-            onSelect={setSelectedFile}
-            level={0}
-          />
-        </ScrollArea>
-      </Paper>
-
-      <Paper withBorder p="md" style={{ height: 'calc(100vh - 200px)' }}>
-        <ScrollArea h="100%">
+    <Grid gutter="md">
+      <Grid.Col span={4}>
+        <EnhancedFileExplorer
+          files={files}
+          onFileSelect={handleFileSelect}
+          isLoading={isLoading}
+          currentPath={selectedFile || undefined}
+        />
+      </Grid.Col>
+      <Grid.Col span={8}>
+        <Paper withBorder p="md" radius="md">
           {selectedFile ? (
-            isLoadingContent ? (
-              <Text>Loading file content...</Text>
-            ) : (
-              <Code block>{fileContent}</Code>
-            )
+            <Stack spacing="md">
+              <Group>
+                <ThemeIcon size={32} radius="md" color="brand" variant="light">
+                  <IconFileCode size={18} />
+                </ThemeIcon>
+                <div>
+                  <Title order={4}>{selectedFile.split('/').pop()}</Title>
+                  <Text size="sm" color="dimmed">
+                    {selectedFile}
+                  </Text>
+                </div>
+              </Group>
+              <Paper pos="relative" withBorder radius="md">
+                <LoadingOverlay visible={isLoadingFile} overlayBlur={2} />
+                {fileContent && (
+                  <CodeViewer
+                    code={fileContent}
+                    language={selectedFile.split('.').pop() || 'text'}
+                  />
+                )}
+              </Paper>
+            </Stack>
           ) : (
-            <Text color="dimmed">Select a file to view its contents</Text>
+            <Stack align="center" spacing="xs" py={50}>
+              <ThemeIcon size={60} radius="xl" color="gray" variant="light">
+                <IconFileCode size={30} />
+              </ThemeIcon>
+              <Text align="center" color="dimmed">
+                Select a file to view its contents
+              </Text>
+              <Text size="sm" align="center" color="dimmed">
+                Choose a file from the explorer on the left
+              </Text>
+            </Stack>
           )}
-        </ScrollArea>
-      </Paper>
-    </Group>
+        </Paper>
+      </Grid.Col>
+    </Grid>
   );
 }

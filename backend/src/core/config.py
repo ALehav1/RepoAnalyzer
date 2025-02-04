@@ -1,73 +1,42 @@
 """Configuration settings for the application."""
-from pathlib import Path
-from typing import Optional
+from typing import List
+from pydantic_settings import BaseSettings, SettingsConfigDict
+import logging
 
-from pydantic import Field
-from pydantic_settings import BaseSettings
-
+# Set up logging
+logger = logging.getLogger(__name__)
 
 class Settings(BaseSettings):
-    """Application settings.
-    
-    Attributes:
-        OPENAI_API_KEY: OpenAI API key for embeddings
-        GITHUB_TOKEN: GitHub personal access token
-        HOST: Server host
-        PORT: Server port
-        DEBUG: Debug mode flag
-        LOG_LEVEL: Logging level
-        DATABASE_URL: Database connection URL
-        OUTPUT_DIR: Directory for outputs
-        VECTOR_STORE_DIR: Directory for ChromaDB vector store
-        REPOS_DIR: Directory for cloned repositories
-        CHROMADB_PATH: Directory for ChromaDB
-    """
-    
+    """Application settings."""
+    model_config = SettingsConfigDict(
+        env_file='.env',
+        env_file_encoding='utf-8',
+        extra='ignore'
+    )
+
     # API Keys
-    OPENAI_API_KEY: str = Field(..., description="OpenAI API key for embeddings", env="OPENAI_API_KEY")
-    GITHUB_TOKEN: str = Field(..., description="GitHub personal access token", env="GITHUB_TOKEN")
-    
+    OPENAI_API_KEY: str = ""
+    GITHUB_TOKEN: str = ""
+
     # Server Configuration
-    HOST: str = Field(default="0.0.0.0", description="Server host", env="HOST")
-    PORT: int = Field(default=3000, description="Server port", env="PORT")
-    DEBUG: bool = Field(default=False, description="Debug mode flag", env="DEBUG")
-    LOG_LEVEL: str = Field(default="INFO", description="Logging level", env="LOG_LEVEL")
-    
+    HOST: str = "0.0.0.0"
+    PORT: int = 8888
+    DEBUG: bool = False
+    LOG_LEVEL: str = "INFO"
+
     # Database
-    DATABASE_URL: str = Field(
-        default=f"sqlite+aiosqlite:///{Path(__file__).parent}/data/repo_analyzer.db",
-        description="Database connection URL",
-        env="DATABASE_URL"
-    )
-    
+    DATABASE_URL: str = "sqlite+aiosqlite:///data/repo_analyzer.db"
+
     # Directories
-    OUTPUT_DIR: str = Field(
-        default="outputs",
-        description="Directory for outputs",
-        env="OUTPUT_DIR"
-    )
-    VECTOR_STORE_DIR: str = Field(
-        default="vector_store",
-        description="Directory for ChromaDB vector store",
-        env="VECTOR_STORE_DIR"
-    )
-    REPOS_DIR: str = Field(
-        default="repos",
-        description="Directory for cloned repositories",
-        env="REPOS_DIR"
-    )
-    CHROMADB_PATH: str = Field(
-        default="chromadb",
-        description="Directory for ChromaDB",
-        env="CHROMADB_PATH"
-    )
+    OUTPUT_DIR: str = "outputs"
+    VECTOR_STORE_DIR: str = "vector_store"
+    REPOS_DIR: str = "repos"
+    CHROMADB_PATH: str = "chromadb"
 
-    class Config:
-        """Pydantic settings configuration."""
-        env_file = ".env"
-        case_sensitive = True
-        extra = "allow"  # Allow extra fields in environment variables
-
-
-# Initialize settings
+# Create a global settings instance
 settings = Settings()
+
+
+def get_settings() -> Settings:
+    """Return the global settings instance."""
+    return settings

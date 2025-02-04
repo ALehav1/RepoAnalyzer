@@ -1,178 +1,361 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { 
-  Tabs, 
-  Title, 
-  Paper, 
-  Stack, 
-  Group, 
-  Badge, 
+import { useParams, useNavigate } from 'react-router-dom';
+import {
+  Tabs,
+  Title,
+  Paper,
+  Stack,
+  Group,
+  Badge,
   Text,
   Grid,
-  Card
+  Card,
+  Container,
+  ThemeIcon,
+  Progress,
+  Button,
+  ActionIcon,
+  Tooltip,
+  RingProgress,
+  Center,
+  rem,
+  LoadingOverlay,
 } from '@mantine/core';
-import { 
-  IconFileText, 
-  IconFolders, 
-  IconCode, 
-  IconChartBar, 
+import {
+  IconFileText,
+  IconFolders,
+  IconCode,
+  IconChartBar,
   IconMessage,
   IconBulb,
-  IconListDetails
+  IconListDetails,
+  IconBrandGithub,
+  IconArrowLeft,
+  IconDownload,
+  IconShare,
+  IconUsers,
+  IconGitCommit,
+  IconFiles,
+  IconCodeDots,
 } from '@tabler/icons-react';
-import FileExplorer from '../components/repo/FileExplorer';
-import CodeViewer from '../components/repo/CodeViewer';
+import { useQuery } from '@tanstack/react-query';
+import { notifications } from '@mantine/notifications';
+import { EnhancedFileExplorer } from '../components/repo/EnhancedFileExplorer';
+import { CodeViewer } from '../components/repo/CodeViewer';
+import { ChatPanel } from '../components/repo/ChatPanel';
+import repoApi from '../api/repoApi';
 
-// Mock data - replace with API calls
-const mockRepo = {
-  name: 'react',
-  description: 'A declarative, efficient, and flexible JavaScript library for building user interfaces.',
-  stats: {
-    files: 1240,
-    lines: 156000,
-    contributors: 42,
-    commits: 15200
-  },
-  readme: '# React\n\nA declarative, efficient, and flexible JavaScript library for building user interfaces.',
-  files: [
-    {
-      name: 'src',
-      type: 'directory' as const,
-      path: '/src',
-      children: [
-        { name: 'index.js', type: 'file' as const, path: '/src/index.js' },
-        { name: 'App.js', type: 'file' as const, path: '/src/App.js' }
-      ]
-    },
-    {
-      name: 'package.json',
-      type: 'file' as const,
-      path: '/package.json'
-    }
-  ],
-  analysis: {
-    score: 85,
-    patterns: [
-      { name: 'Factory Pattern', count: 12 },
-      { name: 'Observer Pattern', count: 8 },
-      { name: 'Singleton Pattern', count: 3 }
-    ],
-    issues: [
-      { severity: 'high', message: 'Memory leak in component lifecycle' },
-      { severity: 'medium', message: 'Unnecessary re-renders detected' }
-    ]
-  }
-};
+function StatCard({ icon: Icon, label, value }: { icon: any; label: string; value: string | number }) {
+  return (
+    <Card shadow="sm" padding="lg" radius="md" withBorder>
+      <Group position="apart">
+        <Text size="xs" color="dimmed" weight={500} transform="uppercase">
+          {label}
+        </Text>
+        <ThemeIcon variant="light" size={38} radius="md">
+          <Icon size="1.5rem" stroke={1.5} />
+        </ThemeIcon>
+      </Group>
+      <Text size="xl" weight={700} mt="sm">
+        {value}
+      </Text>
+    </Card>
+  );
+}
 
 export default function RepoDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const [activeTab, setActiveTab] = useState('summary');
+  const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<string | null>('files');
+
+  const { data: repo, isLoading: repoLoading } = useQuery({
+    queryKey: ['repository', id],
+    queryFn: () => repoApi.getRepository(id!),
+    enabled: !!id,
+    onError: () => {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to load repository details',
+        color: 'red',
+      });
+      navigate('/saved-repos');
+    },
+  });
+
+  const { data: metrics, isLoading: metricsLoading } = useQuery({
+    queryKey: ['metrics', id],
+    queryFn: () => repoApi.getMetrics(id!),
+    enabled: !!id,
+  });
+
+  const { data: fileTree, isLoading: fileTreeLoading } = useQuery({
+    queryKey: ['fileTree', id],
+    queryFn: () => repoApi.getFileTree(id!),
+    enabled: !!id,
+  });
+
+  const { data: fileContent, isLoading: fileContentLoading } = useQuery({
+    queryKey: ['fileContent', id, selectedFile],
+    queryFn: () => repoApi.getFileContent(id!, selectedFile!),
+    enabled: !!id && !!selectedFile,
+  });
+
+  const { data: patterns, isLoading: patternsLoading } = useQuery({
+    queryKey: ['patterns', id],
+    queryFn: () => repoApi.getPatterns(id!),
+    enabled: !!id,
+  });
 
   const handleFileSelect = (path: string) => {
     setSelectedFile(path);
-    // TODO: Fetch file content from API
   };
 
+  const getQualityColor = (score: number) => {
+    if (score >= 80) return 'teal';
+    if (score >= 60) return 'yellow';
+    return 'red';
+  };
+
+  if (repoLoading) {
+    return (
+      <Center style={{ height: '100vh' }}>
+        <LoadingOverlay visible />
+      </Center>
+    );
+  }
+
+  if (!repo) {
+    return null;
+  }
+
   return (
-    <Stack spacing="xl">
-      <Group position="apart" align="flex-start">
-        <div>
-          <Title order={2}>{mockRepo.name}</Title>
-          <Text color="dimmed" mt="xs">{mockRepo.description}</Text>
-        </div>
-        <Badge size="lg" variant="filled" color="blue">
-          Score: {mockRepo.analysis.score}/100
-        </Badge>
-      </Group>
+    <Container size="xl" py="md">
+      <Stack spacing="lg">
+        <Group position="apart">
+          <Group spacing="xs">
+            <ActionIcon
+              variant="light"
+              onClick={() => navigate('/saved-repos')}
+              size="lg"
+              radius="md"
+            >
+              <IconArrowLeft size="1.2rem" />
+            </ActionIcon>
+            <Stack spacing={0}>
+              <Group spacing="xs">
+                <Title order={2}>{repo.name}</Title>
+                <Badge
+                  variant="gradient"
+                  gradient={{ from: 'indigo', to: 'cyan' }}
+                >
+                  {metrics?.languages[0]?.name || 'Unknown'}
+                </Badge>
+              </Group>
+              <Text color="dimmed" size="sm">
+                {repo.description}
+              </Text>
+            </Stack>
+          </Group>
+          <Group spacing="xs">
+            <Button
+              variant="light"
+              leftIcon={<IconBrandGithub size="1rem" />}
+              component="a"
+              href={repo.url}
+              target="_blank"
+            >
+              View on GitHub
+            </Button>
+          </Group>
+        </Group>
 
-      <Tabs value={activeTab} onTabChange={(value) => setActiveTab(value as string)}>
-        <Tabs.List>
-          <Tabs.Tab value="summary" icon={<IconListDetails size={14} />}>Summary</Tabs.Tab>
-          <Tabs.Tab value="readme" icon={<IconFileText size={14} />}>README</Tabs.Tab>
-          <Tabs.Tab value="files" icon={<IconFolders size={14} />}>Files</Tabs.Tab>
-          <Tabs.Tab value="analysis" icon={<IconChartBar size={14} />}>Analysis</Tabs.Tab>
-          <Tabs.Tab value="patterns" icon={<IconBulb size={14} />}>Patterns</Tabs.Tab>
-          <Tabs.Tab value="chat" icon={<IconMessage size={14} />}>Chat</Tabs.Tab>
-        </Tabs.List>
+        <Grid>
+          <Grid.Col span={3}>
+            <StatCard
+              icon={IconFiles}
+              label="Files"
+              value={metrics?.fileCount || 0}
+            />
+          </Grid.Col>
+          <Grid.Col span={3}>
+            <StatCard
+              icon={IconCodeDots}
+              label="Lines of Code"
+              value={metrics?.linesOfCode?.toLocaleString() || 0}
+            />
+          </Grid.Col>
+          <Grid.Col span={3}>
+            <StatCard
+              icon={IconUsers}
+              label="Contributors"
+              value={metrics?.contributors || 0}
+            />
+          </Grid.Col>
+          <Grid.Col span={3}>
+            <StatCard
+              icon={IconGitCommit}
+              label="Commits"
+              value={metrics?.commits?.toLocaleString() || 0}
+            />
+          </Grid.Col>
+        </Grid>
 
-        <Paper withBorder p="md" mt="md">
-          <Tabs.Panel value="summary">
-            <Grid>
-              <Grid.Col span={12} md={6}>
-                <Card withBorder>
-                  <Title order={4} mb="md">Repository Statistics</Title>
-                  <Stack spacing="xs">
-                    <Text>Files: {mockRepo.stats.files}</Text>
-                    <Text>Lines of Code: {mockRepo.stats.lines.toLocaleString()}</Text>
-                    <Text>Contributors: {mockRepo.stats.contributors}</Text>
-                    <Text>Total Commits: {mockRepo.stats.commits.toLocaleString()}</Text>
-                  </Stack>
-                </Card>
-              </Grid.Col>
-              <Grid.Col span={12} md={6}>
-                <Card withBorder>
-                  <Title order={4} mb="md">Analysis Overview</Title>
-                  <Stack spacing="xs">
-                    {mockRepo.analysis.issues.map((issue, index) => (
-                      <Group key={index} position="apart">
-                        <Text>{issue.message}</Text>
-                        <Badge color={issue.severity === 'high' ? 'red' : 'yellow'}>
-                          {issue.severity}
-                        </Badge>
+        <Paper shadow="sm" radius="md" p="md" withBorder>
+          <Tabs value={activeTab} onTabChange={setActiveTab}>
+            <Tabs.List>
+              <Tabs.Tab value="files" icon={<IconFolders size="0.8rem" />}>
+                Files
+              </Tabs.Tab>
+              <Tabs.Tab value="patterns" icon={<IconCode size="0.8rem" />}>
+                Patterns
+              </Tabs.Tab>
+              <Tabs.Tab value="metrics" icon={<IconChartBar size="0.8rem" />}>
+                Metrics
+              </Tabs.Tab>
+              <Tabs.Tab value="chat" icon={<IconMessage size="0.8rem" />}>
+                Chat
+              </Tabs.Tab>
+            </Tabs.List>
+
+            <Tabs.Panel value="files" pt="xl">
+              <Grid>
+                <Grid.Col span={4}>
+                  <Paper withBorder p="md" radius="md">
+                    <EnhancedFileExplorer
+                      files={fileTree || []}
+                      onFileSelect={handleFileSelect}
+                      isLoading={fileTreeLoading}
+                      currentPath={selectedFile}
+                    />
+                  </Paper>
+                </Grid.Col>
+                <Grid.Col span={8}>
+                  <Paper withBorder p="md" radius="md">
+                    {selectedFile ? (
+                      <CodeViewer
+                        code={fileContent?.content || ''}
+                        language={selectedFile.split('.').pop() || 'text'}
+                        loading={fileContentLoading}
+                        fileName={selectedFile}
+                        onDownload={() => {
+                          // Implement download functionality
+                        }}
+                        onShare={() => {
+                          // Implement share functionality
+                        }}
+                      />
+                    ) : (
+                      <Center style={{ height: 400 }}>
+                        <Stack align="center" spacing="xs">
+                          <IconFileText size={40} stroke={1.5} color="gray" />
+                          <Text color="dimmed">Select a file to view its contents</Text>
+                        </Stack>
+                      </Center>
+                    )}
+                  </Paper>
+                </Grid.Col>
+              </Grid>
+            </Tabs.Panel>
+
+            <Tabs.Panel value="patterns" pt="xl">
+              <Grid>
+                {patterns?.map((pattern) => (
+                  <Grid.Col key={pattern.name} span={4}>
+                    <Card shadow="sm" padding="lg" radius="md" withBorder>
+                      <Group position="apart" mb="xs">
+                        <Text weight={500}>{pattern.name}</Text>
+                        <Badge>{pattern.count} instances</Badge>
                       </Group>
-                    ))}
-                  </Stack>
-                </Card>
-              </Grid.Col>
-            </Grid>
-          </Tabs.Panel>
+                      <Text size="sm" color="dimmed" mb="md">
+                        Found in {pattern.examples.length} files
+                      </Text>
+                      <Button
+                        variant="light"
+                        fullWidth
+                        onClick={() => {
+                          setSelectedFile(pattern.examples[0].file);
+                          setActiveTab('files');
+                        }}
+                      >
+                        View Example
+                      </Button>
+                    </Card>
+                  </Grid.Col>
+                ))}
+              </Grid>
+            </Tabs.Panel>
 
-          <Tabs.Panel value="readme">
-            <CodeViewer code={mockRepo.readme} language="markdown" />
-          </Tabs.Panel>
-
-          <Tabs.Panel value="files">
-            <Grid>
-              <Grid.Col span={4}>
-                <FileExplorer files={mockRepo.files} onFileSelect={handleFileSelect} />
-              </Grid.Col>
-              <Grid.Col span={8}>
-                {selectedFile ? (
-                  <CodeViewer 
-                    code="// File content will be loaded here" 
-                    filename={selectedFile} 
-                  />
-                ) : (
-                  <Text color="dimmed">Select a file to view its contents</Text>
-                )}
-              </Grid.Col>
-            </Grid>
-          </Tabs.Panel>
-
-          <Tabs.Panel value="analysis">
-            <Title order={4} mb="md">Code Analysis</Title>
-            {/* TODO: Add detailed code analysis visualizations */}
-          </Tabs.Panel>
-
-          <Tabs.Panel value="patterns">
-            <Grid>
-              {mockRepo.analysis.patterns.map((pattern, index) => (
-                <Grid.Col key={index} span={12} md={4}>
-                  <Card withBorder>
-                    <Title order={4}>{pattern.name}</Title>
-                    <Text mt="xs">Found {pattern.count} instances</Text>
+            <Tabs.Panel value="metrics" pt="xl">
+              <Grid>
+                <Grid.Col span={6}>
+                  <Card shadow="sm" padding="lg" radius="md" withBorder>
+                    <Title order={3} size="h4" mb="md">
+                      Code Quality
+                    </Title>
+                    <Stack spacing="xs">
+                      <Group position="apart">
+                        <Text>Complexity</Text>
+                        <Text weight={500}>{metrics?.complexity || 0}%</Text>
+                      </Group>
+                      <Progress
+                        value={metrics?.complexity || 0}
+                        color={getQualityColor(metrics?.complexity || 0)}
+                        size="xl"
+                        radius="xl"
+                      />
+                      <Group position="apart">
+                        <Text>Maintainability</Text>
+                        <Text weight={500}>{metrics?.maintainability || 0}%</Text>
+                      </Group>
+                      <Progress
+                        value={metrics?.maintainability || 0}
+                        color={getQualityColor(metrics?.maintainability || 0)}
+                        size="xl"
+                        radius="xl"
+                      />
+                      <Group position="apart">
+                        <Text>Test Coverage</Text>
+                        <Text weight={500}>{metrics?.testCoverage || 0}%</Text>
+                      </Group>
+                      <Progress
+                        value={metrics?.testCoverage || 0}
+                        color={getQualityColor(metrics?.testCoverage || 0)}
+                        size="xl"
+                        radius="xl"
+                      />
+                    </Stack>
                   </Card>
                 </Grid.Col>
-              ))}
-            </Grid>
-          </Tabs.Panel>
+                <Grid.Col span={6}>
+                  <Card shadow="sm" padding="lg" radius="md" withBorder>
+                    <Title order={3} size="h4" mb="md">
+                      Language Distribution
+                    </Title>
+                    {metrics?.languages.map((lang) => (
+                      <Group key={lang.name} position="apart" mb="xs">
+                        <Text>{lang.name}</Text>
+                        <Text weight={500}>{lang.percentage}%</Text>
+                        <Progress
+                          value={lang.percentage}
+                          color="blue"
+                          size="xl"
+                          radius="xl"
+                          style={{ width: '60%' }}
+                        />
+                      </Group>
+                    ))}
+                  </Card>
+                </Grid.Col>
+              </Grid>
+            </Tabs.Panel>
 
-          <Tabs.Panel value="chat">
-            {/* TODO: Implement AI chat interface */}
-          </Tabs.Panel>
+            <Tabs.Panel value="chat" pt="xl">
+              <ChatPanel repoId={id!} onFileSelect={handleFileSelect} />
+            </Tabs.Panel>
+          </Tabs>
         </Paper>
-      </Tabs>
-    </Stack>
+      </Stack>
+    </Container>
   );
 }

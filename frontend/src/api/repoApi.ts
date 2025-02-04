@@ -116,6 +116,11 @@ const repoApi = {
   },
 
   // Chat
+  getChatMessages: async (repoId: string) => {
+    const response = await api.get<ChatMessage[]>(`/repos/${repoId}/chat`);
+    return response.data;
+  },
+
   sendChatMessage: async (repoId: string, message: string) => {
     const response = await api.post<ChatMessage>(`/repos/${repoId}/chat`, {
       message,

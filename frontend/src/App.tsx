@@ -1,11 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { MantineProvider, ColorSchemeProvider, ColorScheme } from '@mantine/core';
+import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Notifications } from '@mantine/notifications';
 import { useState } from 'react';
-import { AppShell } from '@mantine/core';
 import ErrorBoundary from './components/layout/ErrorBoundary';
-import AppNavbar from './components/layout/AppNavbar';
+import { AppShellLayout } from './components/layout/AppShellLayout';
 import HomePage from './pages/HomePage';
 import SavedReposPage from './pages/SavedReposPage';
 import RepoDetailPage from './pages/RepoDetailPage';
@@ -24,39 +23,33 @@ const queryClient = new QueryClient({
 });
 
 export default function App() {
-  const [colorScheme, setColorScheme] = useState<ColorScheme>('light');
+  const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('light');
 
-  const toggleColorScheme = (value?: ColorScheme) => {
-    setColorScheme(value || (colorScheme === 'dark' ? 'light' : 'dark'));
+  const toggleColorScheme = () => {
+    setColorScheme((current) => (current === 'dark' ? 'light' : 'dark'));
   };
 
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
-        <ColorSchemeProvider colorScheme={colorScheme} toggleColorScheme={toggleColorScheme}>
-          <MantineProvider theme={{ ...theme, colorScheme }} withGlobalStyles withNormalizeCSS>
-            <Notifications />
-            <Router>
-              <AppShell
-                padding="md"
-                navbar={<AppNavbar />}
-                styles={(theme) => ({
-                  main: {
-                    backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0],
-                  },
-                })}
-              >
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/saved-repos" element={<SavedReposPage />} />
-                  <Route path="/repo/:id" element={<RepoDetailPage />} />
-                  <Route path="/best-practices" element={<BestPracticesPage />} />
-                  <Route path="/chat" element={<ChatPage />} />
-                </Routes>
-              </AppShell>
-            </Router>
-          </MantineProvider>
-        </ColorSchemeProvider>
+        <MantineProvider 
+          theme={{ ...theme, colorScheme }} 
+          withGlobalStyles 
+          withNormalizeCSS
+        >
+          <Notifications />
+          <Router>
+            <AppShellLayout>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/saved-repos" element={<SavedReposPage />} />
+                <Route path="/repo/:id" element={<RepoDetailPage />} />
+                <Route path="/best-practices" element={<BestPracticesPage />} />
+                <Route path="/chat" element={<ChatPage />} />
+              </Routes>
+            </AppShellLayout>
+          </Router>
+        </MantineProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
