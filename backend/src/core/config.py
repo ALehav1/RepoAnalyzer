@@ -11,12 +11,25 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file='.env',
         env_file_encoding='utf-8',
-        extra='ignore'
+        extra='ignore',
+        case_sensitive=True
     )
 
     # API Keys
     OPENAI_API_KEY: str = ""
     GITHUB_TOKEN: str = ""
+
+    # API settings
+    API_V1_STR: str = "/api/v1"
+    PROJECT_NAME: str = "Repository Analyzer"
+
+    # CORS settings
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+    ]
 
     # Server Configuration
     HOST: str = "0.0.0.0"
@@ -33,10 +46,17 @@ class Settings(BaseSettings):
     REPOS_DIR: str = "repos"
     CHROMADB_PATH: str = "chromadb"
 
+    def get_cors_origins(self) -> List[str]:
+        """Get the list of allowed CORS origins."""
+        return self.CORS_ORIGINS
+
 # Create a global settings instance
 settings = Settings()
 
-
 def get_settings() -> Settings:
-    """Return the global settings instance."""
+    """Get the application settings.
+    
+    Returns:
+        Settings: The application settings.
+    """
     return settings

@@ -3,19 +3,19 @@ import logging
 import os
 import sys
 from fastapi import FastAPI, Depends, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
-from .routes import chat, repositories
+from .routes import health, repositories, chat
 from .schemas.health import HealthResponse, ComponentStatus
 from ..utils.logging import setup_logging
 from ..middleware.error_handler import handle_errors, AppError
 from ..database import get_db, engine, init_db
 from ..models.base import Base
 from ..core.config import get_settings
+from ..core.cors import configure_cors
 
 # Set up logging
 setup_logging()
@@ -23,23 +23,16 @@ logger = logging.getLogger(__name__)
 
 # Create FastAPI app
 app = FastAPI(
-    title="RepoAnalyzer API",
-    description="API for analyzing GitHub repositories",
-    version="1.0.0"
+    title="Repository Analyzer API",
+    description="API for analyzing GitHub repositories and detecting patterns",
+    version="1.0.0",
 )
 
 # Initialize settings
 settings = get_settings()
 
-# Configure CORS directly
-logger.debug("Setting up CORS with hardcoded origins")
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# Configure CORS
+configure_cors(app, settings)
 
 # Add error handling middleware
 @app.exception_handler(AppError)
@@ -52,8 +45,9 @@ async def app_error_handler(request, exc):
 app.add_middleware(BaseHTTPMiddleware, dispatch=handle_errors)
 
 # Include routers
-app.include_router(repositories.router, prefix="/api/repositories", tags=["repositories"])
-app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+app.include_router(health.router, tags=["Health"])
+app.include_router(repositories.router, prefix="/repos", tags=["Repositories"])
+app.include_router(chat.router, prefix="/chat", tags=["Chat"])
 
 @app.on_event("startup")
 def startup():
@@ -111,4 +105,4 @@ async def health_check(db: AsyncSession = Depends(get_db)):
 @app.get("/")
 async def root():
     """Root endpoint."""
-    return {"message": "Welcome to RepoAnalyzer API"}
+    return {"message": "Welcome to Repository Analyzer API"}

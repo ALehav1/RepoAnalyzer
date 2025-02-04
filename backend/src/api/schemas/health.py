@@ -9,19 +9,14 @@ class ComponentStatus(BaseModel):
 
 class HealthResponse(BaseModel):
     """Response model for health check endpoint."""
-    status: Literal["healthy", "unhealthy"] = Field(description="Overall health status")
-    components: Dict[str, ComponentStatus] = Field(description="Status of each system component")
+    status: str
+    version: str
 
     model_config = {
         "json_schema_extra": {
             "example": {
                 "status": "healthy",
-                "components": {
-                    "database": {
-                        "status": "healthy",
-                        "details": "Connected successfully"
-                    }
-                }
+                "version": "1.0.0"
             }
         }
     }

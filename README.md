@@ -7,6 +7,7 @@ A powerful knowledge management platform that analyzes GitHub repositories for c
 Current Version: 0.1.0
 
 ### Latest Changes (2025-02-03)
+
 - Enhanced file explorer with modern UI and features
   - File type icons and filtering
   - Search functionality
@@ -27,6 +28,7 @@ Current Version: 0.1.0
 - Consolidated environment configuration
 
 ### Upcoming Changes (0.2.0)
+
 - Complete API documentation
 - Enhanced pattern detection
 - Improved visualization features
@@ -35,6 +37,7 @@ Current Version: 0.1.0
 ## Project Status
 
 ### 1. Core Infrastructure [IN PROGRESS]
+
 - [x] Project structure setup
 - [x] FastAPI backend with async support
 - [x] Pattern detection service
@@ -45,6 +48,7 @@ Current Version: 0.1.0
 - [ ] Frontend development
 
 ### 2. Pattern Detection Features [IN PROGRESS]
+
 - [x] AST-based code analysis
 - [x] Pattern confidence scoring
 - [x] Pattern relationship tracking
@@ -56,12 +60,14 @@ Current Version: 0.1.0
 ## Known Limitations
 
 1. **Pattern Detection**
+
    - Currently supports only Python files
    - Limited to basic design patterns (Factory, Singleton, Observer)
    - Pattern confidence scoring may need manual verification
    - Large files (>10k LOC) may impact performance
 
 2. **Analysis Features**
+
    - Code quality metrics are basic (complexity, lines of code)
    - Documentation analysis is limited to docstring presence
    - No support for custom pattern definitions
@@ -78,11 +84,13 @@ Current Version: 0.1.0
 ### 1. Layout Structure
 
 #### 1.1 Overall Layout (AppShell)
+
 - **Header**: Application logo, title, global navigation, user profile, theme switch
 - **Navbar**: Main sections (Home, Saved Repositories, Best Practices, Chat, Settings)
 - **Main Content Area**: Page-specific components via React Router
 
 #### 1.2 Page-Level Layout
+
 - **Dashboard/Home**: Quick stats, recent analyses, repository input
 - **Saved Repositories**: Repository grid/list with metrics
 - **Repository Detail**: Tabbed interface (Summary, Code Patterns, Documentation, Best Practices)
@@ -143,18 +151,20 @@ export const theme = {
   headings: {
     fontFamily: 'Inter, sans-serif',
   },
-}
+};
 ```
 
 ### 4. Interactive Elements
 
 #### 4.1 Core Components
+
 - **Buttons**: Primary (filled), Secondary (outline)
 - **Tabs**: Repository detail sections
 - **Modals**: Advanced settings, bulk uploads
 - **Progress/Loader**: Analysis progress indicators
 
 #### 4.2 Animations
+
 - Subtle transitions for tab changes
 - Hover states
 - Modal animations
@@ -163,12 +173,14 @@ export const theme = {
 ### 5. Data Visualization
 
 #### 5.1 Chart Types
+
 - Language distribution (Bar/Pie)
 - Pattern frequency (Radial/Bar)
 - Code quality metrics (Line/Radar)
 - File size distribution (Treemap)
 
 #### 5.2 Libraries
+
 - @nivo/pie, @nivo/bar
 - react-chartjs-2
 - D3.js for custom visualizations
@@ -176,6 +188,7 @@ export const theme = {
 ### 6. Responsive Design
 
 #### 6.1 Breakpoints
+
 - xs: < 576px
 - sm: < 768px
 - md: < 992px
@@ -183,6 +196,7 @@ export const theme = {
 - xl: ≥ 1200px
 
 #### 6.2 Mobile Adaptations
+
 - Collapsible navigation
 - Single-column layouts
 - Touch-friendly interactions
@@ -191,16 +205,19 @@ export const theme = {
 ### 7. User Flows
 
 #### 7.1 Repository Analysis
+
 1. Input GitHub URL
 2. View analysis progress
 3. Navigate to results
 
 #### 7.2 Repository Exploration
+
 1. Browse saved repositories
 2. Filter/search functionality
 3. Detailed view navigation
 
 #### 7.3 Pattern Discovery
+
 1. View pattern library
 2. Examine usage examples
 3. Copy pattern implementations
@@ -208,12 +225,14 @@ export const theme = {
 ### 8. Accessibility
 
 #### 8.1 Core Requirements
+
 - ARIA labels for interactive elements
 - Keyboard navigation support
 - Color contrast compliance
 - Screen reader compatibility
 
 #### 8.2 Implementation
+
 - Semantic HTML structure
 - Focus management
 - Error announcements
@@ -246,13 +265,58 @@ export const theme = {
   - [ ] Keyboard support
   - [ ] Screen reader testing
 
+## File Structure Notes
+
+### Important Files
+
+1. **Backend Entry Points**:
+
+   - `backend/src/api/main.py`: Main API server with FastAPI setup
+   - `backend/src/main.py`: Legacy entry point (to be removed)
+
+2. **Frontend Entry Points**:
+
+   - `frontend/src/main.tsx`: Current frontend entry point with Mantine setup
+   - `src/main.tsx`: Legacy frontend entry point (to be removed)
+
+3. **Layout Components**:
+   - `frontend/src/components/layout/MainHeader.tsx`: Application header
+   - `frontend/src/components/layout/MainNavbar.tsx`: Navigation bar
+
+### Duplicate Files (Need Cleanup)
+
+The following files need to be consolidated or removed:
+
+1. `backend/src/main.py` → Move functionality to `backend/src/api/main.py`
+2. `src/main.tsx` → Move functionality to `frontend/src/main.tsx`
+
+### File Organization
+
+```
+repo-analyzer/
+├── backend/
+│   └── src/
+│       ├── api/
+│       │   ├── main.py       # Main API server
+│       │   ├── routes/       # API route handlers
+│       │   └── schemas/      # Pydantic models
+│       └── core/
+│           ├── config.py     # App configuration
+│           ├── cors.py       # CORS setup
+│           └── logging.py    # Logging config
+└── frontend/
+    └── src/
+        ├── main.tsx         # Frontend entry
+        ├── components/      # React components
+        └── api/            # API client
+```
+
 ## Project Structure and Organization
 
 ```
 repository-analyzer/
 ├── backend/                    # FastAPI backend application
-│   ├── alembic/               # Database migrations
-│   ├── src/                   # Source code
+│   ├── src/                   # Main backend source code
 │   │   ├── api/              # API endpoints and routes
 │   │   │   ├── routes/       # Route handlers
 │   │   │   └── schemas/      # API request/response schemas
@@ -263,7 +327,10 @@ repository-analyzer/
 │   │   ├── schemas/          # Pydantic schemas
 │   │   └── services/         # Business logic
 │   ├── tests/                # Test files
-│   └── data/                 # Data storage
+│   ├── alembic/            # Database migrations
+│   ├── scripts/            # Utility scripts
+│   ├── middleware/         # Custom middleware
+│   └── requirements.txt    # Python dependencies
 ├── frontend/                  # React frontend application
 │   ├── src/
 │   │   ├── api/             # API client and interfaces
@@ -279,35 +346,96 @@ repository-analyzer/
 └── docs/                   # Documentation
 ```
 
+## API Configuration
+
+### CORS Setup
+
+The application uses a dedicated CORS configuration system to handle cross-origin requests securely:
+
+1. **Configuration Files**:
+
+   - `backend/src/core/cors.py`: Central CORS configuration
+   - `backend/src/core/config.py`: CORS origins and settings
+
+2. **Allowed Origins**:
+
+   ```python
+   CORS_ORIGINS = [
+       "http://localhost:3000",  # React dev server
+       "http://localhost:5173",  # Vite dev server
+       "http://127.0.0.1:3000",
+       "http://127.0.0.1:5173",
+   ]
+   ```
+
+3. **Environment Variables**:
+   - Override CORS settings via `.env`:
+     ```bash
+     CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+     ```
+
+### API Health Checks
+
+The application includes a comprehensive health check system:
+
+1. **Endpoint**: `/health`
+2. **Response Format**:
+   ```json
+   {
+     "status": "healthy",
+     "components": {
+       "database": {
+         "status": "healthy",
+         "message": "Database connection successful"
+       }
+     },
+     "version": "1.0.0"
+   }
+   ```
+3. **Component Status**: Each major component (database, cache, etc.) reports its health status
+4. **Monitoring**: Use this endpoint for uptime monitoring and deployment verification
+
+### API Routes
+
+All API routes are organized in the `backend/src/api/routes` directory:
+
+1. **Health**: `/health` - System health and component status
+2. **Repositories**: `/repos/*` - Repository management and analysis
+3. **Chat**: `/chat/*` - AI-powered code analysis chat
+
 ## UI Configuration
 
 ### Mantine v7 Setup
+
 The frontend uses Mantine v7 for UI components and theming. Key configurations include:
 
 1. **Theme Configuration**
+
 ```typescript
 // frontend/src/theme.ts
 export const theme = {
   // Custom theme configuration
   colorScheme: 'light',
   // Add other theme customizations
-}
+};
 ```
 
 2. **Color Scheme Management**
+
 ```typescript
 // App.tsx
 const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('light');
 const toggleColorScheme = () => {
-  setColorScheme((current) => (current === 'dark' ? 'light' : 'dark'));
+  setColorScheme(current => (current === 'dark' ? 'light' : 'dark'));
 };
 ```
 
 3. **MantineProvider Setup**
+
 ```typescript
-<MantineProvider 
-  theme={{ ...theme, colorScheme }} 
-  withGlobalStyles 
+<MantineProvider
+  theme={{ ...theme, colorScheme }}
+  withGlobalStyles
   withNormalizeCSS
 >
   {/* App content */}
@@ -315,9 +443,11 @@ const toggleColorScheme = () => {
 ```
 
 ### Navigation Configuration
+
 The application uses a responsive navbar implemented with Mantine's AppShell:
 
 1. **AppShell Layout**
+
 ```typescript
 <AppShell
   padding="md"
@@ -333,6 +463,7 @@ The application uses a responsive navbar implemented with Mantine's AppShell:
 ```
 
 2. **Navbar Component**
+
 - Located at: `frontend/src/components/layout/AppNavbar.tsx`
 - Implements responsive design for mobile and desktop
 - Handles navigation state and user interactions
@@ -340,6 +471,7 @@ The application uses a responsive navbar implemented with Mantine's AppShell:
 ### CORS Configuration
 
 #### Backend (FastAPI)
+
 ```python
 # backend/src/main.py
 from fastapi.middleware.cors import CORSMiddleware
@@ -354,6 +486,7 @@ app.add_middleware(
 ```
 
 #### Frontend (Vite)
+
 ```typescript
 // vite.config.ts
 export default defineConfig({
@@ -362,15 +495,17 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8888',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
-      }
-    }
-  }
-})
+        rewrite: path => path.replace(/^\/api/, ''),
+      },
+    },
+  },
+});
 ```
 
 #### Production Setup
+
 For production, CORS is handled through Nginx reverse proxy:
+
 ```nginx
 # nginx.conf
 location /api/ {
@@ -383,11 +518,13 @@ location /api/ {
 ### Troubleshooting Common UI Issues
 
 1. **Mantine Version Conflicts**
+
    - Clear Vite cache: `rm -rf node_modules/.vite`
    - Reinstall dependencies: `npm install`
    - Ensure all Mantine packages have matching versions
 
 2. **CORS Issues**
+
    - Check backend CORS configuration matches frontend URL
    - Verify proxy settings in Vite config
    - Check for proper protocol (http/https) matching
@@ -401,17 +538,23 @@ location /api/ {
 ## Configuration
 
 ### Backend Configuration
+
 The backend server runs on port 8888 by default. You can modify this in the following ways:
+
 1. Environment variable: `PORT=<port_number>`
 2. Command line: `uvicorn src.api.main:app --port <port_number>`
 
 ### Frontend Configuration
+
 The frontend API client is configured to connect to `http://localhost:8888` by default. To change this:
+
 1. Update `baseURL` in `frontend/src/api/client.ts`
 2. Set environment variable: `VITE_API_URL=<api_url>`
 
 ### Health Checks
+
 The application includes a health check system that monitors:
+
 - Overall application status
 - Database connectivity
 - Component-specific health metrics
@@ -419,6 +562,7 @@ The application includes a health check system that monitors:
 Access the health endpoint at: `GET /api/health`
 
 Example response:
+
 ```json
 {
   "status": "healthy",
@@ -432,7 +576,9 @@ Example response:
 ```
 
 ### Error Handling
+
 The application uses a centralized error handling system:
+
 1. Backend:
    - Custom `AppError` class for application-specific errors
    - Global error handling middleware
@@ -447,6 +593,7 @@ The application uses a centralized error handling system:
 > Note: These diagrams are conceptual and may not reflect the exact implementation. They are meant to provide a high-level understanding of the system's architecture and data flow.
 
 ### Repository Analysis Flow
+
 ```mermaid
 graph TD
     A[User Input] --> B[Repository URL]
@@ -461,6 +608,7 @@ graph TD
 ```
 
 ### Pattern Detection Flow
+
 ```mermaid
 graph TD
     A[Load File] --> B[Determine Language]
@@ -478,6 +626,7 @@ graph TD
 ```
 
 ### Caching Strategy
+
 ```mermaid
 graph TD
     A[Request] --> B{Cache Hit?}
@@ -491,6 +640,7 @@ graph TD
 ```
 
 ### Error Handling Flow
+
 ```mermaid
 graph TD
     A[Error Occurs] --> B{Error Type}
@@ -506,6 +656,7 @@ graph TD
 ```
 
 ### Data Flow
+
 ```mermaid
 graph TD
     A[Frontend] -->|HTTP/WS| B[API Gateway]
@@ -524,6 +675,7 @@ graph TD
 ### Current Status (2025-02-03)
 
 #### 1. Core Setup
+
 - Project structure with Vite and TypeScript
 - Mantine UI integration for modern, accessible components
 - React Query for efficient data fetching
@@ -532,12 +684,13 @@ graph TD
 - API integration layer
 
 #### 2. File Structure
+
 ```
 frontend/
 ├── src/
 │   ├── api/          # API integration
 │   │   └── repoApi.ts # Repository API client
-│   ├── components/   
+│   ├── components/
 │   │   ├── layout/   # Layout components
 │   │   ├── repo/     # Repository components
 │   │   ├── analysis/ # Analysis visualizations
@@ -548,6 +701,7 @@ frontend/
 ```
 
 #### 3. Key Components Implemented
+
 - `App.tsx`: Main application layout with routing
 - `theme.ts`: Global theme configuration
 - `AppNavbar.tsx`: Navigation component with theme toggle
@@ -562,13 +716,16 @@ frontend/
 - `AIChatInterface.tsx`: AI chat interface
 
 #### 4. Features Implemented
+
 - Repository Management:
+
   - Single repository submission
   - Bulk CSV upload
   - Repository listing with search, sort, and filter
   - Detailed repository view
 
 - Code Analysis:
+
   - File explorer with syntax highlighting
   - Code quality metrics visualization
   - Language distribution charts
@@ -576,6 +733,7 @@ frontend/
   - Pattern detection
 
 - Best Practices:
+
   - Design pattern catalog
   - Implementation examples
   - Usage guidelines
@@ -587,6 +745,7 @@ frontend/
   - Syntax highlighting in responses
 
 #### 5. API Integration
+
 - Repository analysis endpoints
 - File content fetching
 - Analysis results
@@ -595,12 +754,15 @@ frontend/
 - TypeScript interfaces
 
 #### 6. Next Steps
+
 1. Testing:
+
    - Unit tests for components
    - Integration tests
    - End-to-end tests
 
 2. Performance:
+
    - Code splitting
    - Lazy loading
    - Caching strategies
@@ -645,13 +807,16 @@ RepoAnalyzer/
 ## Setup and Installation
 
 ### Prerequisites
+
 - Python 3.11+
 - Node.js 18+
 - PostgreSQL 14+
 - Redis (for caching)
 
 ### Backend Setup
+
 1. Create virtual environment:
+
    ```bash
    cd backend
    python -m venv venv
@@ -659,18 +824,21 @@ RepoAnalyzer/
    ```
 
 2. Install dependencies:
+
    ```bash
    pip install -r requirements.txt
    pip install -r requirements-dev.txt  # For development
    ```
 
 3. Set up environment variables:
+
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
 4. Initialize database:
+
    ```bash
    alembic upgrade head
    ```
@@ -681,12 +849,15 @@ RepoAnalyzer/
    ```
 
 ### Frontend Setup
+
 1. Install dependencies:
+
    ```bash
    npm install
    ```
 
 2. Set up environment variables:
+
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
@@ -700,6 +871,7 @@ RepoAnalyzer/
 ## Development Tools
 
 ### Code Quality
+
 - ESLint
 - Prettier
 - Black (Python)
@@ -707,6 +879,7 @@ RepoAnalyzer/
 - Husky (pre-commit hooks)
 
 ### Testing
+
 - Jest + React Testing Library
 - Cypress
 - pytest
@@ -714,21 +887,25 @@ RepoAnalyzer/
 - Lighthouse CI
 
 ### Monitoring
+
 - Prometheus
 - Logging (repo_analyzer.log)
 
 ### Database
+
 - PostgreSQL
 - SQLAlchemy ORM
 - Alembic migrations
 
 ### Caching
+
 - Redis
 - React Query
 
 ## Scripts
 
 ### Backend
+
 ```bash
 # Run tests
 pytest
@@ -741,6 +918,7 @@ alembic revision --autogenerate -m "description"
 ```
 
 ### Frontend
+
 ```bash
 # Development
 npm run dev
@@ -768,7 +946,9 @@ npm run format
 ## Testing Implementation
 
 ### 1. Unit Tests
+
 Located in `frontend/src/__tests__/`
+
 - Component testing using React Testing Library
 - Tests for:
   - AnalysisCharts component
@@ -779,7 +959,9 @@ Located in `frontend/src/__tests__/`
   - User input validation
 
 ### 2. Performance Testing
+
 Located in `frontend/src/__tests__/performance/`
+
 - Load time measurements:
   - Repository list loading
   - Metrics data loading
@@ -794,7 +976,9 @@ Located in `frontend/src/__tests__/performance/`
   - Total Blocking Time
 
 ### 3. Accessibility Testing
+
 Located in `frontend/src/__tests__/accessibility/`
+
 - WCAG Compliance:
   - Color contrast
   - Keyboard navigation
@@ -807,7 +991,9 @@ Located in `frontend/src/__tests__/accessibility/`
   - Interactive elements
 
 ### 4. API Contract Testing
+
 Located in `frontend/src/__tests__/api/`
+
 - Endpoint testing:
   - GET /repos
   - GET /repos/:id/metrics
@@ -822,6 +1008,7 @@ Located in `frontend/src/__tests__/api/`
   - Error simulation
 
 ### Test Files Structure
+
 ```
 frontend/
 ├── src/
@@ -846,7 +1033,9 @@ frontend/
 ```
 
 ### Running Tests
+
 1. Unit & Integration Tests:
+
    ```bash
    npm run test              # Run all tests
    npm run test:watch        # Watch mode
@@ -854,6 +1043,7 @@ frontend/
    ```
 
 2. E2E Tests:
+
    ```bash
    npm run cypress:open      # Interactive mode
    npm run cypress:run       # Headless mode
@@ -866,6 +1056,7 @@ frontend/
    ```
 
 ### Test Coverage
+
 - Components: ~90%
 - User interactions: ~95%
 - API integration: ~85%
@@ -874,12 +1065,15 @@ frontend/
 - Performance benchmarks: Established
 
 ### Next Steps
+
 1. Continuous Integration:
+
    - GitHub Actions setup
    - Automated test runs
    - Coverage reporting
 
 2. Load Testing:
+
    - Large repository analysis
    - Concurrent user simulation
    - Network condition testing
@@ -951,12 +1145,12 @@ The application implements comprehensive error handling:
 
 ### Error Messages and Solutions
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `ECONNREFUSED` | API server down | Check if backend is running and port is correct |
-| `Invalid token` | Expired/invalid JWT | Re-authenticate or check token expiration |
-| `MemoryError` | Large repository analysis | Increase memory limit or use chunked processing |
-| `Too many requests` | Rate limiting | Implement request queuing or increase limits |
+| Error               | Cause                     | Solution                                        |
+| ------------------- | ------------------------- | ----------------------------------------------- |
+| `ECONNREFUSED`      | API server down           | Check if backend is running and port is correct |
+| `Invalid token`     | Expired/invalid JWT       | Re-authenticate or check token expiration       |
+| `MemoryError`       | Large repository analysis | Increase memory limit or use chunked processing |
+| `Too many requests` | Rate limiting             | Implement request queuing or increase limits    |
 
 ### Health Checks
 
@@ -979,13 +1173,16 @@ npm run build
 #### Files and Code
 
 ##### GET /repos/{id}/files
+
 Get repository file structure.
 
 Query Parameters:
+
 - `path`: string (optional, defaults to root)
 - `depth`: int (optional, defaults to 1)
 
 Response:
+
 ```json
 {
   "files": [
@@ -1002,14 +1199,17 @@ Response:
 ```
 
 ##### GET /repos/{id}/file-content
+
 Get file content.
 
 Query Parameters:
+
 - `path`: string (required)
 - `highlight`: boolean (optional, syntax highlighting)
 - `lines`: string (optional, e.g., "1-100")
 
 Response:
+
 ```json
 {
   "content": "string",
@@ -1024,9 +1224,11 @@ Response:
 #### Analysis
 
 ##### POST /repos/{id}/analyze/patterns
+
 Analyze specific patterns.
 
 Request:
+
 ```json
 {
   "patterns": ["Factory", "Singleton"],
@@ -1035,6 +1237,7 @@ Request:
 ```
 
 Response:
+
 ```json
 {
   "taskId": "string",
@@ -1043,9 +1246,11 @@ Response:
 ```
 
 ##### GET /repos/{id}/analyze/status/{taskId}
+
 Get analysis task status.
 
 Response:
+
 ```json
 {
   "status": "pending|running|completed|failed",
@@ -1058,14 +1263,17 @@ Response:
 #### Metrics
 
 ##### GET /repos/{id}/metrics/history
+
 Get historical metrics.
 
 Query Parameters:
+
 - `from`: string (ISO date)
 - `to`: string (ISO date)
 - `metrics`: string[] (comma-separated)
 
 Response:
+
 ```json
 {
   "metrics": [
@@ -1081,9 +1289,11 @@ Response:
 ```
 
 ##### POST /repos/{id}/metrics/custom
+
 Calculate custom metrics.
 
 Request:
+
 ```json
 {
   "metrics": [
@@ -1099,6 +1309,7 @@ Request:
 ### Additional Configuration
 
 #### Vite Configuration (vite.config.ts)
+
 ```typescript
 export default defineConfig({
   plugins: [react()],
@@ -1108,13 +1319,13 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        rewrite: path => path.replace(/^\/api/, ''),
       },
       '/ws': {
         target: 'ws://localhost:8000',
-        ws: true
-      }
-    }
+        ws: true,
+      },
+    },
   },
   build: {
     sourcemap: true,
@@ -1122,15 +1333,16 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          charts: ['chart.js', '@nivo/core']
-        }
-      }
-    }
-  }
+          charts: ['chart.js', '@nivo/core'],
+        },
+      },
+    },
+  },
 });
 ```
 
 #### TypeScript Configuration (tsconfig.json)
+
 ```json
 {
   "compilerOptions": {
@@ -1160,6 +1372,7 @@ export default defineConfig({
 ```
 
 #### PM2 Configuration (ecosystem.config.js)
+
 ```javascript
 module.exports = {
   apps: [
@@ -1195,13 +1408,14 @@ module.exports = {
 ### Additional Flow Diagrams
 
 #### Authentication Flow
+
 ```mermaid
 sequenceDiagram
     participant U as User
     participant F as Frontend
     participant B as Backend
     participant G as GitHub
-    
+
     U->>F: Click Login
     F->>G: Redirect to GitHub
     G->>F: Return with code
@@ -1214,6 +1428,7 @@ sequenceDiagram
 ```
 
 #### File Analysis Flow
+
 ```mermaid
 graph TD
     A[Load File] --> B[Determine Language]
@@ -1231,6 +1446,7 @@ graph TD
 ```
 
 #### Caching Strategy
+
 ```mermaid
 graph TD
     A[Request] --> B{Cache Hit?}
@@ -1244,6 +1460,7 @@ graph TD
 ```
 
 #### Error Handling Flow
+
 ```mermaid
 graph TD
     A[Error Occurs] --> B{Error Type}
@@ -1263,6 +1480,7 @@ graph TD
 #### Common Issues
 
 ##### 1. Installation Issues
+
 ```bash
 # Problem: Dependencies fail to install
 npm cache clean --force
@@ -1275,6 +1493,7 @@ pip install -r requirements.txt --no-cache-dir
 ```
 
 ##### 2. Database Issues
+
 ```bash
 # Problem: Database migrations fail
 alembic downgrade base
@@ -1286,6 +1505,7 @@ createdb repo_analyzer
 ```
 
 ##### 3. API Connection Issues
+
 ```bash
 # Check API status
 curl http://localhost:8000/health
@@ -1295,6 +1515,7 @@ wscat -c ws://localhost:8000/ws
 ```
 
 ##### 4. Analysis Issues
+
 ```bash
 # Clear analysis cache
 redis-cli FLUSHDB
@@ -1306,18 +1527,21 @@ python scripts/reset_repo.py <repo_id>
 #### Debugging Tools
 
 ##### 1. Frontend Debugging
+
 - React DevTools
 - Redux DevTools
 - Network Tab monitoring
 - Console logging with debug package
 
 ##### 2. Backend Debugging
+
 - FastAPI debug mode
 - pdb/ipdb for Python debugging
 - logging to repo_analyzer.log
 - SQLAlchemy echo mode
 
 ##### 3. Performance Issues
+
 - Lighthouse reports
 - React Profiler
 - Database query analysis
@@ -1325,12 +1549,12 @@ python scripts/reset_repo.py <repo_id>
 
 #### Error Messages and Solutions
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `ECONNREFUSED` | API server down | Check if backend is running and port is correct |
-| `Invalid token` | Expired/invalid JWT | Re-authenticate or check token expiration |
-| `MemoryError` | Large repository analysis | Increase memory limit or use chunked processing |
-| `Too many requests` | Rate limiting | Implement request queuing or increase limits |
+| Error               | Cause                     | Solution                                        |
+| ------------------- | ------------------------- | ----------------------------------------------- |
+| `ECONNREFUSED`      | API server down           | Check if backend is running and port is correct |
+| `Invalid token`     | Expired/invalid JWT       | Re-authenticate or check token expiration       |
+| `MemoryError`       | Large repository analysis | Increase memory limit or use chunked processing |
+| `Too many requests` | Rate limiting             | Implement request queuing or increase limits    |
 
 #### Health Checks
 
@@ -1556,6 +1780,7 @@ Benefits:
 ## Recent Updates
 
 ### Chat Feature Implementation (2025-02-03)
+
 - Added new chat interface for interacting with repositories
 - Components:
   - Frontend: `src/pages/ChatPage.tsx` - React component with real-time message display
