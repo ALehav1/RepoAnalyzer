@@ -34,7 +34,7 @@ interface CodeViewerProps {
   filename?: string;
 }
 
-export default function CodeViewer({ code, language = 'typescript', filename }: CodeViewerProps) {
+export function CodeViewer({ code, language = 'typescript', filename }: CodeViewerProps) {
   const [viewMode, setViewMode] = useState<'rendered' | 'source'>('source');
 
   const handleDownload = () => {

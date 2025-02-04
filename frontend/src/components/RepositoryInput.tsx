@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
 import { repositoryApi } from '../api/client';
 
-export default function RepositoryInput() {
+export function RepositoryInput() {
   const [repoUrl, setRepoUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();

@@ -1,4 +1,4 @@
-import { AppShell, useMantineTheme } from '@mantine/core';
+import { AppShell } from '@mantine/core';
 import { MainHeader } from './MainHeader';
 import { MainNavbar } from './MainNavbar';
 import { useState } from 'react';
@@ -8,22 +8,23 @@ interface AppShellLayoutProps {
 }
 
 export function AppShellLayout({ children }: AppShellLayoutProps) {
-  const theme = useMantineTheme();
   const [opened, setOpened] = useState(false);
 
   return (
     <AppShell
-      styles={{
-        main: {
-          background: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0],
-        },
-      }}
-      navbarOffsetBreakpoint="sm"
-      asideOffsetBreakpoint="sm"
-      navbar={<MainNavbar />}
-      header={<MainHeader />}
+      header={{ height: 60 }}
+      navbar={{ width: { base: 300 }, breakpoint: 'sm' }}
+      padding="md"
     >
-      {children}
+      <AppShell.Header>
+        <MainHeader opened={opened} onToggle={() => setOpened(o => !o)} />
+      </AppShell.Header>
+
+      <AppShell.Navbar>
+        <MainNavbar />
+      </AppShell.Navbar>
+
+      <AppShell.Main>{children}</AppShell.Main>
     </AppShell>
   );
 }

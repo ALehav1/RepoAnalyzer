@@ -1,15 +1,21 @@
-import { Header, Group, Text, ActionIcon, useMantineColorScheme, Box, Button } from '@mantine/core';
+import { AppShell, Group, Text, ActionIcon, useMantineColorScheme, Box, Button, Burger } from '@mantine/core';
 import { IconSun, IconMoon, IconBrandGithub } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 
-export function MainHeader() {
+interface MainHeaderProps {
+  opened: boolean;
+  onToggle: () => void;
+}
+
+export function MainHeader({ opened, onToggle }: MainHeaderProps) {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const navigate = useNavigate();
 
   return (
-    <Header height={60} px="md">
+    <AppShell.Header height={60} px="md">
       <Group position="apart" sx={{ height: '100%' }}>
         <Group>
+          <Burger opened={opened} onClick={onToggle} hiddenFrom="sm" size="sm" />
           <Box
             component="img"
             src="/logo.svg"
@@ -31,11 +37,13 @@ export function MainHeader() {
 
         <Group>
           <Button
-            variant="subtle"
-            leftIcon={<IconBrandGithub size={20} />}
-            onClick={() => window.open('https://github.com', '_blank')}
+            component="a"
+            href="https://github.com/ALehav1/RepoAnalyzer"
+            target="_blank"
+            rel="noopener noreferrer"
+            leftSection={<IconBrandGithub size={20} />}
           >
-            View on GitHub
+            View Source
           </Button>
           
           <ActionIcon
@@ -49,6 +57,6 @@ export function MainHeader() {
           </ActionIcon>
         </Group>
       </Group>
-    </Header>
+    </AppShell.Header>
   );
 }

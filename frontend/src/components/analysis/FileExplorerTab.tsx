@@ -10,7 +10,7 @@ interface FileExplorerTabProps {
   repoId: string;
 }
 
-export default function FileExplorerTab({ repoId }: FileExplorerTabProps) {
+export function FileExplorerTab({ repoId }: FileExplorerTabProps) {
   const [files, setFiles] = useState<FileNode[]>([]);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [fileContent, setFileContent] = useState<string | null>(null);

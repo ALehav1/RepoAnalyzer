@@ -1,80 +1,31 @@
 import { useState } from 'react';
-import { Navbar, Group, Code, ScrollArea, createStyles, rem, UnstyledButton, Text } from '@mantine/core';
+import { Group, Code, UnstyledButton, Text } from '@mantine/core';
 import {
   IconHome2,
   IconDatabase,
   IconBrain,
   IconMessage,
   IconSettings,
-  IconChevronRight,
 } from '@tabler/icons-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-
-const useStyles = createStyles((theme) => ({
-  navbar: {
-    backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[6] : theme.white,
-    paddingBottom: 0,
-  },
-
-  header: {
-    padding: theme.spacing.md,
-    paddingTop: 0,
-    marginLeft: -theme.spacing.md,
-    marginRight: -theme.spacing.md,
-    color: theme.colorScheme === 'dark' ? theme.white : theme.black,
-    borderBottom: `${rem(1)} solid ${
-      theme.colorScheme === 'dark' ? theme.colors.dark[4] : theme.colors.gray[3]
-    }`,
-  },
-
-  links: {
-    marginLeft: -theme.spacing.md,
-    marginRight: -theme.spacing.md,
-  },
-
-  linksInner: {
-    paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.xl,
-  },
-
-  link: {
-    width: '100%',
-    padding: `${theme.spacing.xs} ${theme.spacing.md}`,
-    borderRadius: 0,
-    color: theme.colorScheme === 'dark' ? theme.colors.dark[0] : theme.colors.gray[7],
-    '&:hover': {
-      backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[5] : theme.colors.gray[0],
-    },
-  },
-
-  linkActive: {
-    '&, &:hover': {
-      backgroundColor: theme.fn.variant({ variant: 'light', color: theme.primaryColor }).background,
-      color: theme.fn.variant({ variant: 'light', color: theme.primaryColor }).color,
-    },
-  },
-
-  chevron: {
-    transition: 'transform 200ms ease',
-  },
-}));
+import classes from './MainNavbar.module.css';
 
 interface NavbarLinkProps {
-  icon: React.FC<any>;
+  icon: React.ComponentType<any>;
   label: string;
   active?: boolean;
-  onClick?(): void;
+  onClick(): void;
 }
 
-function NavbarLink({ icon: Icon, label, active, onClick }: NavbarLinkProps) {
-  const { classes, cx } = useStyles();
+export function NavbarLink({ icon: Icon, label, active, onClick }: NavbarLinkProps) {
   return (
     <UnstyledButton
       onClick={onClick}
-      className={cx(classes.link, { [classes.linkActive]: active })}
+      className={classes.link}
+      data-active={active || undefined}
     >
       <Group>
-        <Icon size={20} />
+        <Icon size={20} stroke={1.5} />
         <Text size="sm">{label}</Text>
       </Group>
     </UnstyledButton>
@@ -90,7 +41,6 @@ const navItems = [
 ];
 
 export function MainNavbar() {
-  const { classes } = useStyles();
   const location = useLocation();
   const navigate = useNavigate();
   const [version] = useState('0.1.0');
@@ -105,19 +55,19 @@ export function MainNavbar() {
   ));
 
   return (
-    <Navbar height="100vh" width={{ sm: 300 }} p="md" className={classes.navbar}>
-      <Navbar.Section className={classes.header}>
+    <nav className={classes.navbar}>
+      <div className={classes.header}>
         <Group position="apart">
-          <Text size="sm" weight={500}>
+          <Text size="sm" fw={500}>
             Navigation
           </Text>
-          <Code sx={{ fontWeight: 700 }}>v{version}</Code>
+          <Code fw={700}>v{version}</Code>
         </Group>
-      </Navbar.Section>
+      </div>
 
-      <Navbar.Section grow className={classes.links} component={ScrollArea}>
+      <div className={classes.links}>
         <div className={classes.linksInner}>{links}</div>
-      </Navbar.Section>
-    </Navbar>
+      </div>
+    </nav>
   );
 }

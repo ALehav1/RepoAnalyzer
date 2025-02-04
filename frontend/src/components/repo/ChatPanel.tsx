@@ -165,6 +165,7 @@ export function ChatPanel({ repoId, onFileSelect }: ChatPanelProps) {
                           variant="subtle"
                           size="xs"
                           mt="xs"
+                          leftSection={<IconBrandGithub size={16} />}
                           onClick={() => onFileSelect(ref.file)}
                         >
                           View in Explorer
@@ -192,7 +193,7 @@ export function ChatPanel({ repoId, onFileSelect }: ChatPanelProps) {
           <Button
             type="submit"
             loading={mutation.isLoading}
-            leftIcon={<IconSend size={16} />}
+            leftSection={<IconSend size={16} />}
           >
             Send
           </Button>

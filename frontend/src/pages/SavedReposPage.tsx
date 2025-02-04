@@ -20,7 +20,7 @@ import { useQuery } from '@tanstack/react-query';
 import repoApi from '../api/repoApi';
 import { notifications } from '@mantine/notifications';
 
-export default function SavedReposPage() {
+export function SavedReposPage() {
   const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<string>('lastAnalyzed');
@@ -78,6 +78,13 @@ export default function SavedReposPage() {
               onChange={(e) => setSearch(e.target.value)}
               sx={{ flexGrow: 1 }}
             />
+            <Button
+              variant="outline"
+              onClick={() => setSearch('')}
+              leftSection={<IconSearch size={16} />}
+            >
+              Reset search
+            </Button>
             <Select
               placeholder="Sort by"
               value={sortBy}

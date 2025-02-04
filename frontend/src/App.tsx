@@ -1,15 +1,15 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { MantineProvider } from '@mantine/core';
+import { MantineProvider, ColorSchemeScript } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Notifications } from '@mantine/notifications';
 import { useState } from 'react';
-import ErrorBoundary from './components/layout/ErrorBoundary';
+import { ErrorBoundary } from './components/layout/ErrorBoundary';
 import { AppShellLayout } from './components/layout/AppShellLayout';
-import HomePage from './pages/HomePage';
-import SavedReposPage from './pages/SavedReposPage';
-import RepoDetailPage from './pages/RepoDetailPage';
-import BestPracticesPage from './pages/BestPracticesPage';
-import ChatPage from './pages/ChatPage';
+import { HomePage } from './pages/HomePage';
+import { SavedReposPage } from './pages/SavedReposPage';
+import { RepoDetailPage } from './pages/RepoDetailPage';
+import { BestPracticesPage } from './pages/BestPracticesPage';
+import { ChatPage } from './pages/ChatPage';
 import { theme } from './theme';
 
 const queryClient = new QueryClient({
@@ -22,7 +22,7 @@ const queryClient = new QueryClient({
   },
 });
 
-export default function App() {
+export function App() {
   const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('light');
 
   const toggleColorScheme = () => {
@@ -31,13 +31,10 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <MantineProvider 
-          theme={{ ...theme, colorScheme }} 
-          withGlobalStyles 
-          withNormalizeCSS
-        >
-          <Notifications />
+      <MantineProvider theme={theme} defaultColorScheme={colorScheme}>
+        <ColorSchemeScript defaultColorScheme={colorScheme} />
+        <Notifications />
+        <QueryClientProvider client={queryClient}>
           <Router>
             <AppShellLayout>
               <Routes>
@@ -49,8 +46,8 @@ export default function App() {
               </Routes>
             </AppShellLayout>
           </Router>
-        </MantineProvider>
-      </QueryClientProvider>
+        </QueryClientProvider>
+      </MantineProvider>
     </ErrorBoundary>
   );
 }

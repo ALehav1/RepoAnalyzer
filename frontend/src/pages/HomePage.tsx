@@ -130,7 +130,7 @@ function BulkUploadModal({ opened, onClose }: { opened: boolean; onClose: () => 
   );
 }
 
-export default function HomePage() {
+export function HomePage() {
   const [repoUrl, setRepoUrl] = useState('');
   const [bulkModalOpened, setBulkModalOpened] = useState(false);
   const navigate = useNavigate();
@@ -214,7 +214,7 @@ export default function HomePage() {
                 <Button
                   type="submit"
                   loading={analyzeMutation.isPending}
-                  leftIcon={<IconSearch size={16} />}
+                  leftSection={<IconSearch size={16} />}
                 >
                   Analyze
                 </Button>
@@ -228,7 +228,7 @@ export default function HomePage() {
                 variant="subtle"
                 size="sm"
                 onClick={() => setBulkModalOpened(true)}
-                leftIcon={<IconUpload size={16} />}
+                leftSection={<IconUpload size={16} />}
               >
                 Bulk Upload
               </Button>

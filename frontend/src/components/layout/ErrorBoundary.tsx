@@ -1,70 +1,51 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Container, Title, Text, Button, Stack, Paper } from '@mantine/core';
+import React from 'react';
+import { Title, Text, Button, Container, Group } from '@mantine/core';
 
-interface Props {
-  children: ReactNode;
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
 }
 
-interface State {
+interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
 }
 
-class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: null,
-    errorInfo: null,
-  };
-
-  public static getDerivedStateFromError(error: Error): State {
-    return {
-      hasError: true,
-      error,
-      errorInfo: null,
-    };
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
   }
 
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('Uncaught error:', error, errorInfo);
-    this.setState({
-      error,
-      errorInfo,
-    });
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
   }
 
-  private handleReset = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null,
-    });
-    window.location.reload();
-  };
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
+  }
 
-  public render() {
+  render() {
     if (this.state.hasError) {
       return (
         <Container size="md" py="xl">
-          <Paper p="xl" radius="md" withBorder>
-            <Stack>
-              <Title order={2} color="red">Something went wrong</Title>
-              <Text>
-                {this.state.error?.message || 'An unexpected error occurred'}
-              </Text>
-              {this.state.errorInfo && (
-                <Paper p="md" bg="gray.1" withBorder>
-                  <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>
-                    {this.state.errorInfo.componentStack}
-                  </Text>
-                </Paper>
-              )}
-              <Button onClick={this.handleReset} color="blue">
-                Try Again
-              </Button>
-            </Stack>
-          </Paper>
+          <Title order={2} size="h1" style={{ textAlign: 'center' }}>
+            Something went wrong
+          </Title>
+          <Text c="dimmed" size="lg" style={{ textAlign: 'center' }}>
+            {this.state.error?.message || 'An unexpected error occurred'}
+          </Text>
+          <Group position="center" mt="xl">
+            <Button
+              variant="outline"
+              size="md"
+              onClick={() => {
+                this.setState({ hasError: false, error: null });
+                window.location.reload();
+              }}
+            >
+              Refresh page
+            </Button>
+          </Group>
         </Container>
       );
     }
@@ -72,5 +53,3 @@ class ErrorBoundary extends Component<Props, State> {
     return this.props.children;
   }
 }
-
-export default ErrorBoundary;

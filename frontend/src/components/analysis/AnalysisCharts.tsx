@@ -39,7 +39,7 @@ function MetricRing({ value, label, color }: { value: number; label: string; col
   );
 }
 
-export default function AnalysisCharts({ metrics }: AnalysisChartsProps) {
+export function AnalysisCharts({ metrics }: AnalysisChartsProps) {
   return (
     <Grid>
       <Grid.Col span={12}>

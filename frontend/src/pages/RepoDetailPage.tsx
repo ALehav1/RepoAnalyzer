@@ -63,7 +63,7 @@ function StatCard({ icon: Icon, label, value }: { icon: any; label: string; valu
   );
 }
 
-export default function RepoDetailPage() {
+export function RepoDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -159,11 +159,11 @@ export default function RepoDetailPage() {
           </Group>
           <Group spacing="xs">
             <Button
-              variant="light"
-              leftIcon={<IconBrandGithub size="1rem" />}
               component="a"
               href={repo.url}
               target="_blank"
+              rel="noopener noreferrer"
+              leftSection={<IconBrandGithub size="1rem" />}
             >
               View on GitHub
             </Button>

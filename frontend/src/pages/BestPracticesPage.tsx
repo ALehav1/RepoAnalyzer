@@ -211,7 +211,7 @@ function PatternCard({ pattern }: { pattern: Pattern }) {
   );
 }
 
-export default function BestPracticesPage() {
+export function BestPracticesPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState<string | null>(null);
   const [language, setLanguage] = useState<string | null>(null);

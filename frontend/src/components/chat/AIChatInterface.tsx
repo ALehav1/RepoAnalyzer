@@ -30,7 +30,7 @@ interface AIChatInterfaceProps {
   repoName: string;
 }
 
-export default function AIChatInterface({ repoName }: AIChatInterfaceProps) {
+export function AIChatInterface({ repoName }: AIChatInterfaceProps) {
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([
     {

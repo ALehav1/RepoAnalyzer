@@ -51,7 +51,7 @@ interface Repository {
   url: string;
 }
 
-export default function ChatPage() {
+export function ChatPage() {
   const { repoId } = useParams<{ repoId: string }>();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);

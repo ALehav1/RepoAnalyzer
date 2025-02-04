@@ -190,7 +190,7 @@ function FileTreeNode({
   );
 }
 
-export default function EnhancedFileExplorer({
+export function EnhancedFileExplorer({
   files,
   onFileSelect,
   isLoading = false,
