@@ -44,4 +44,97 @@ describe("Header", () => {
     const nav = screen.getByRole("navigation");
     expect(nav).toBeInTheDocument();
   });
+
+  it("handles long navigation items without breaking layout", () => {
+    const LongHeader = () => (
+      <Header>
+        <div data-testid="long-nav">
+          {Array(10).fill("Very Long Navigation Item").map((text, i) => (
+            <a key={i} href={`/link-${i}`}>{text}</a>
+          ))}
+        </div>
+      </Header>
+    );
+
+    render(
+      <MemoryRouter>
+        <LongHeader />
+      </MemoryRouter>
+    );
+
+    const nav = screen.getByTestId("long-nav");
+    expect(nav).toBeInTheDocument();
+    expect(nav).toHaveStyle({ overflowX: "auto" });
+  });
+
+  it("maintains theme toggle state after re-render", () => {
+    let theme = "light";
+    const setTheme = jest.fn((newTheme) => { theme = newTheme; });
+    
+    jest.spyOn(require("@/hooks/useTheme"), "useTheme").mockImplementation(() => ({
+      theme,
+      setTheme,
+    }));
+
+    const { rerender } = render(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>
+    );
+
+    const themeButton = screen.getByRole("button", { name: /toggle theme/i });
+    fireEvent.click(themeButton);
+    
+    expect(setTheme).toHaveBeenCalledWith("dark");
+
+    rerender(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByRole("button", { name: /toggle theme/i })).toBeInTheDocument();
+  });
+
+  it("handles custom class names", () => {
+    render(
+      <MemoryRouter>
+        <Header className="custom-header-class" />
+      </MemoryRouter>
+    );
+
+    const header = screen.getByRole("banner");
+    expect(header).toHaveClass("custom-header-class");
+  });
+
+  it("handles keyboard navigation", () => {
+    render(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>
+    );
+
+    const links = screen.getAllByRole("link");
+    links[0].focus();
+
+    // Simulate tab navigation
+    for (let i = 1; i < links.length; i++) {
+      fireEvent.keyDown(document.activeElement!, { key: "Tab" });
+      expect(document.activeElement).toBe(links[i]);
+    }
+  });
+
+  it("maintains focus after theme toggle", () => {
+    render(
+      <MemoryRouter>
+        <Header />
+      </MemoryRouter>
+    );
+
+    const themeButton = screen.getByRole("button", { name: /toggle theme/i });
+    themeButton.focus();
+    fireEvent.click(themeButton);
+
+    expect(document.activeElement).toBe(themeButton);
+  });
 });
