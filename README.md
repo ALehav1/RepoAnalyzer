@@ -1458,4 +1458,93 @@ Our UI components follow WCAG guidelines:
    - Handle loading states
    - Manage side effects
 
+### Layout Components
+
+The application uses a modular layout system built with three main components:
+
+#### 1. AppShell Component
+```typescript
+interface AppShellProps {
+  children: React.ReactNode;
+  header?: React.ReactNode;
+  sidebar?: React.ReactNode;
+}
 ```
+- **Purpose**: Main layout container that manages the application's structure
+- **Features**:
+  - Flexible header and sidebar slots
+  - Responsive design with mobile support
+  - Proper content scrolling
+  - Consistent padding and spacing
+- **Usage**:
+```tsx
+<AppShell
+  header={<Header />}
+  sidebar={<Sidebar />}
+>
+  <PageContent />
+</AppShell>
+```
+
+#### 2. Header Component
+```typescript
+interface HeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
+```
+- **Purpose**: Main navigation header with branding and controls
+- **Features**:
+  - Repository branding
+  - Main navigation links
+  - Theme toggle (dark/light mode)
+  - Responsive mobile design
+  - Accessible navigation
+- **Dependencies**:
+  - useTheme hook for theme management
+  - Radix UI icons
+  - React Router for navigation
+
+#### 3. Sidebar Component
+```typescript
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
+  className?: string;
+}
+```
+- **Purpose**: Navigation sidebar with repository analysis sections
+- **Features**:
+  - Section-based navigation
+  - Active route highlighting
+  - Icon-based navigation items
+  - Collapsible on mobile
+  - Customizable via className prop
+- **Sections**:
+  - Files and Structure
+  - Branches
+  - Code Patterns
+  - Documentation
+  - Analysis Tools
+
+#### Testing
+All layout components include comprehensive tests:
+- Unit tests for rendering
+- Integration tests for navigation
+- Accessibility tests
+- Theme switching tests
+- Mobile responsiveness tests
+
+#### Usage Guidelines
+1. **AppShell**: Always wrap your main application with AppShell
+2. **Header**: Use at the top level, avoid nested headers
+3. **Sidebar**: Can be used at multiple levels, but prefer single instance
+4. **Responsive Design**:
+   - Mobile: < 768px (collapsed sidebar)
+   - Tablet: 768px - 992px
+   - Desktop: > 992px
+
+#### Component Organization
+```
+frontend/src/components/layout/
+├── AppShell.tsx       # Main layout container
+├── Header.tsx         # Top navigation bar
+├── Sidebar.tsx        # Navigation sidebar
+├── ErrorBoundary.tsx  # Error handling
+├── __tests__/        # Component tests
+└── index.ts          # Barrel exports
