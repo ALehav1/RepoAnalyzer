@@ -1,17 +1,17 @@
-import { useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
-import { Card } from '../components/ui/card'
-import { useRepo } from '../context/RepoContext'
-import { useToast } from '../components/ui/use-toast'
-import { Button } from '../components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
-import { FileTree } from '../components/FileTree'
-import { ScrollArea } from '../components/ui/scroll-area'
-import { MessageSquare, FileCode, BookOpen, GitFork, Star } from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
-import CodeQualityView from '../components/CodeQualityView'
-import DocumentationView from '../components/DocumentationView'
-import BestPracticesView from '../components/BestPracticesView'
+import React, { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import { Card } from '@components/common/ui/card'
+import { useRepo } from '@context/RepoContext'
+import { useToast } from '@components/common/ui/use-toast'
+import { Button } from '@components/common/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/common/ui/tabs'
+import { FileTree } from '@components/repository/FileTree'
+import { ScrollArea } from '@components/common/ui/scroll-area'
+import { Loader2 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import CodeQualityView from '@components/repository/CodeQualityView'
+import DocumentationView from '@components/repository/DocumentationView'
+import BestPracticesView from '@components/repository/BestPracticesView'
 
 export default function RepoDetail() {
   const { id } = useParams<{ id: string }>()
@@ -45,11 +45,11 @@ export default function RepoDetail() {
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <Star className="h-4 w-4" />
+            <Loader2 className="h-4 w-4" />
             <span>{repository.stars}</span>
           </div>
           <div className="flex items-center space-x-2">
-            <GitFork className="h-4 w-4" />
+            <Loader2 className="h-4 w-4" />
             <span>{repository.forks}</span>
           </div>
         </div>

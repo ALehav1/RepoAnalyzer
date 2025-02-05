@@ -6,46 +6,46 @@ A powerful knowledge management platform that analyzes GitHub repositories for c
 
 Current Version: 0.1.0
 
-### Latest Changes (2025-02-03)
+### Latest Changes (2025-02-05)
 
-- Implemented Mantine v7 UI Framework
-  - AppShell layout with responsive design
-  - Modern navigation with collapsible sidebar
-  - Proper component hierarchy and state management
-  - Fixed component prop type issues
+- Cleaned up Layout Components
+  - Consolidated duplicate components
+  - Removed: AppShellLayout, MainHeader, MainNavbar, AppNavbar
+  - Standardized on: AppShell, Header, Sidebar, ErrorBoundary
+  - Consistent styling with Tailwind CSS
+  - Improved component organization
+- Improved Project Structure
+  - Removed duplicate README files
+  - Consolidated documentation
+  - Updated component exports
+  - Cleaner imports
+- Implemented Custom UI Component System
+  - Built on Radix UI primitives for accessibility
+  - Styled with Tailwind CSS for consistent design
+  - Dark mode support out of the box
+  - Type-safe components with TypeScript
+  - Proper component organization with barrel files
 - Enhanced UI Components
-  - MainNavbar: Navigation with icon-based links
-  - MainHeader: Responsive header with toggle controls
-  - AppShellLayout: Proper layout structure with TypeScript support
-- Fixed UI Issues
-  - Resolved invalid boolean attribute warning for AppShell
-  - Updated component props to match Mantine v7 specifications
-  - Improved type safety with proper TypeScript interfaces
-- Enhanced file explorer with modern UI and features
-  - File type icons and filtering
-  - Search functionality
-  - Collapsible tree view
-  - Current file highlighting
-- Improved code viewer component
-  - Markdown preview support
-  - Line numbers
-  - File download and sharing
-  - Syntax highlighting
-  - Code copying
-- Added comprehensive error handling middleware
-- Implemented health check endpoint with component status monitoring
-- Fixed API client configuration and port settings
-- Added TypeScript interfaces for API responses
-- Improved error logging and debugging capabilities
-- Updated backend server configuration for better stability
-- Consolidated environment configuration
-
-### Upcoming Changes (0.2.0)
-
-- Complete API documentation
-- Enhanced pattern detection
-- Improved visualization features
-- User authentication system
+  - Button: Versatile button component with variants
+  - Card: Flexible card layout with header/footer
+  - Dialog: Modal dialogs with animations
+  - Input: Form inputs with validation states
+  - Select: Accessible dropdown select
+  - Checkbox: Interactive checkbox component
+  - Progress: Progress indicators
+  - Toast: Notification system
+  - Badge: Status indicators
+  - ScrollArea: Custom scrollbars
+  - DropdownMenu: Complex menu systems
+- Improved Project Structure
+  - Path aliases for cleaner imports
+  - Barrel files for component exports
+  - Consistent file organization
+  - Enhanced type safety
+- Added comprehensive component documentation
+- Implemented modern design system
+- Fixed component accessibility issues
+- Added animation and transition support
 
 ## Project Status
 
@@ -98,14 +98,14 @@ Current Version: 0.1.0
 
 #### 1.1 Overall Layout (AppShell)
 
-The application uses Mantine's AppShell component for consistent layout:
+The application uses a custom AppShell component for consistent layout:
 
-- **Header Component** (`MainHeader.tsx`)
+- **Header Component** (`Header.tsx`)
   - Height: 60px
   - Contains: Logo, toggle button, and user controls
   - Responsive design with mobile support
 
-- **Navbar Component** (`MainNavbar.tsx`)
+- **Sidebar Component** (`Sidebar.tsx`)
   - Width: 300px (collapsible on mobile)
   - Contains: Navigation links with icons
   - Sections:
@@ -118,13 +118,13 @@ The application uses Mantine's AppShell component for consistent layout:
 - **Main Content Area**
   - Rendered via React Router
   - Proper padding and spacing
-  - Responsive to navbar state
+  - Responsive to sidebar state
 
 #### 1.2 Component Architecture
 
-- **AppShellLayout**
+- **AppShell**
   ```typescript
-  interface AppShellLayoutProps {
+  interface AppShellProps {
     children: React.ReactNode;
   }
   ```
@@ -132,25 +132,24 @@ The application uses Mantine's AppShell component for consistent layout:
   - Handles responsive behavior
   - Provides consistent padding and spacing
 
-- **MainNavbar**
+- **Header**
   ```typescript
-  interface NavbarLinkProps {
-    icon: React.ComponentType<any>;
-    label: string;
-    active?: boolean;
-    onClick(): void;
+  interface HeaderProps {
+    logo: React.ReactNode;
+    toggleButton: React.ReactNode;
+    userControls: React.ReactNode;
   }
   ```
-  - Uses Mantine's UnstyledButton for custom styling
+  - Uses Radix UI primitives for custom styling
   - Icon-based navigation with active state
   - CSS modules for styling isolation
 
 #### 1.3 Styling and Theme
 
-- Using Mantine's built-in theme system
+- Using Tailwind CSS for styling
 - CSS modules for component-specific styles
 - Responsive breakpoints:
-  - Mobile: < 768px (collapsed navbar)
+  - Mobile: < 768px (collapsed sidebar)
   - Tablet: 768px - 992px
   - Desktop: > 992px
 
@@ -177,7 +176,7 @@ The application uses Mantine's AppShell component for consistent layout:
 
 - Add loading states for route transitions
 - Implement proper error boundaries
-- Add animations for navbar collapse/expand
+- Add animations for sidebar collapse/expand
 - Enhance mobile navigation experience
 - Add breadcrumbs for deep navigation
 
@@ -185,32 +184,137 @@ The application uses Mantine's AppShell component for consistent layout:
 
 ```
 frontend/
-├─ src/
-│  ├─ components/
-│  │  ├─ layout/
-│  │  │  ├─ MainHeader.tsx
-│  │  │  ├─ MainNavbar.tsx
-│  │  │  └─ AppShellLayout.tsx
-│  │  ├─ repository/
-│  │  │  ├─ RepoCard.tsx
-│  │  │  ├─ RepoDetailTabs.tsx
-│  │  │  ├─ EnhancedFileExplorer.tsx  # Modern file tree with search and filters
-│  │  │  ├─ CodeViewer.tsx            # Code viewer with syntax highlighting and features
-│  │  │  └─ ...
-│  │  ├─ chat/
-│  │  │  ├─ ChatMessage.tsx           # Enhanced chat message component
-│  │  │  └─ ChatInterface.tsx
-│  │  └─ analysis/
-│  │     └─ PatternVisualization.tsx
-│  └─ pages/
-│     ├─ HomePage.tsx
-│     ├─ SavedReposPage.tsx
-│     ├─ RepoDetailPage.tsx
-│     ├─ BestPracticesPage.tsx
-│     └─ ChatPage.tsx
+├── src/
+│   ├── components/
+│   │   ├── common/
+│   │   │   ├── ui/           # Reusable UI components
+│   │   │   │   ├── button.tsx
+│   │   │   │   ├── card.tsx
+│   │   │   │   └── index.ts  # Barrel file
+│   │   │   └── index.ts      # Barrel file
+│   │   ├── repository/       # Repository-specific components
+│   │   └── layout/          # Layout components
+│   ├── lib/
+│   │   └── utils.ts         # Shared utilities
+│   ├── styles/
+│   │   └── globals.css      # Global styles and design tokens
+│   └── pages/              # Page components
+└── package.json
 ```
 
-### 4. Repository Analysis Flow
+### Import Conventions
+
+We use path aliases and barrel files to keep imports clean and maintainable:
+
+```typescript
+// ✅ Good: Using path aliases and barrel files
+import { Button, Card } from "@/components/common/ui";
+import { cn } from "@/lib/utils";
+
+// ❌ Bad: Direct imports without aliases
+import { Button } from "../../components/common/ui/button";
+import { cn } from "../../../lib/utils";
+```
+
+### UI Component System
+
+Our UI components are built with:
+- Radix UI primitives for accessibility
+- Tailwind CSS for styling
+- TypeScript for type safety
+- Class Variance Authority for variants
+
+Example usage:
+
+```typescript
+import { Button } from "@/components/common/ui";
+
+// Basic button
+<Button>Click me</Button>
+
+// Button with variant
+<Button variant="destructive">Delete</Button>
+
+// Button with custom class
+<Button className="w-full">Full width</Button>
+```
+
+### Design System
+
+Our design system uses CSS variables for theming:
+
+```css
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --primary: 222.2 47.4% 11.2%;
+  /* ... other tokens */
+}
+
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  /* ... dark mode tokens */
+}
+```
+
+### Component Documentation
+
+Each UI component follows these principles:
+
+1. **Accessibility First**
+   - ARIA labels and roles
+   - Keyboard navigation
+   - Screen reader support
+
+2. **Type Safety**
+   - Full TypeScript support
+   - Proper prop types
+   - Variant definitions
+
+3. **Customization**
+   - Variant support
+   - Custom class names
+   - Theme integration
+
+4. **Performance**
+   - Optimized renders
+   - Proper memo usage
+   - Efficient styling
+
+Example component with variants:
+
+```typescript
+import { cva, type VariantProps } from "class-variance-authority";
+
+const buttonVariants = cva(
+  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  {
+    variants: {
+      variant: {
+        default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+        destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+        ghost: "hover:bg-accent hover:text-accent-foreground",
+        link: "text-primary underline-offset-4 hover:underline",
+      },
+      size: {
+        default: "h-9 px-4 py-2",
+        sm: "h-8 rounded-md px-3 text-xs",
+        lg: "h-10 rounded-md px-8",
+        icon: "h-9 w-9",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+);
+```
+
+### Repository Analysis Flow
 
 ```mermaid
 graph LR
@@ -225,7 +329,7 @@ graph LR
     H --> I[Generate Report]
 ```
 
-### 5. Chat System Architecture
+### Chat System Architecture
 
 ```mermaid
 graph TB
@@ -238,35 +342,18 @@ graph TB
     G --> H[User Interface]
 ```
 
-### 6. Theme Configuration
+### Theme Configuration
 
 ```typescript
 // theme.ts
 export const theme = {
+  // Custom theme configuration
   colorScheme: 'light',
-  colors: {
-    brand: [
-      '#F0F8FF',
-      '#C2E0FF',
-      '#A5D8FF',
-      '#7CC4FA',
-      '#4FAEF7',
-      '#2491F4',
-      '#1283F0',
-      '#0B6BD4',
-      '#0A5CAB',
-      '#07468C',
-    ],
-  },
-  primaryColor: 'brand',
-  fontFamily: 'Inter, sans-serif',
-  headings: {
-    fontFamily: 'Inter, sans-serif',
-  },
+  // Add other theme customizations
 };
 ```
 
-### 7. Interactive Elements
+### Interactive Elements
 
 #### 7.1 Core Components
 
@@ -282,7 +369,7 @@ export const theme = {
 - Modal animations
 - Loading states
 
-### 8. Data Visualization
+### Data Visualization
 
 #### 8.1 Chart Types
 
@@ -297,7 +384,7 @@ export const theme = {
 - react-chartjs-2
 - D3.js for custom visualizations
 
-### 9. Responsive Design
+### Responsive Design
 
 #### 9.1 Breakpoints
 
@@ -314,7 +401,7 @@ export const theme = {
 - Touch-friendly interactions
 - Optimized charts
 
-### 10. User Flows
+### User Flows
 
 #### 10.1 Repository Analysis
 
@@ -334,7 +421,7 @@ export const theme = {
 2. Examine usage examples
 3. Copy pattern implementations
 
-### 11. Accessibility
+### Accessibility
 
 #### 11.1 Core Requirements
 
@@ -376,6 +463,127 @@ export const theme = {
   - [ ] ARIA implementation
   - [ ] Keyboard support
   - [ ] Screen reader testing
+
+## Project Organization
+
+### Directory Structure
+
+```
+repo-analyzer/
+├── frontend/
+│   └── src/
+│       ├── api/
+│       │   └── client.ts     # API client configuration
+│       ├── components/
+│       │   ├── common/       # Shared/reusable components
+│       │   │   └── ui/       # Reusable UI components
+│       │   ├── repository/   # Repository analysis components
+│       │   └── layout/       # Layout components
+│       ├── hooks/           # Custom React hooks
+│       ├── theme/           # Mantine theme configuration
+│       └── utils/           # Utility functions
+│   ├── public/              # Static assets
+│   └── tests/               # Frontend tests
+├── backend/
+│   ├── src/
+│   │   ├── api/            # API endpoints and routing
+│   │   ├── core/           # Core functionality
+│   │   ├── services/       # Business logic
+│   │   └── utils/          # Utility functions
+│   └── tests/              # Backend tests
+└── docs/                   # Documentation
+```
+
+### Frontend Organization Rules
+
+1. Component Structure
+   - All components must be in `frontend/src/components/`
+   - Use appropriate subdirectory based on component type:
+     - `common/`: Reusable components (buttons, inputs, etc.)
+     - `layout/`: Layout components (AppShell, Navbar, etc.)
+     - `repository/`: Repository analysis components
+
+2. Naming Conventions
+   - Components: PascalCase (e.g., `RepositoryInput.tsx`)
+   - Utilities: camelCase (e.g., `apiClient.ts`)
+   - Test files: ComponentName.test.tsx
+   - CSS modules: ComponentName.module.css
+
+3. File Organization
+   - Each component directory should have:
+     - Component file (TSX)
+     - Tests directory (`__tests__`)
+     - CSS modules (if needed)
+     - Index file for exports
+
+4. Import Standards
+   - Use barrel exports (index.ts) for cleaner imports
+   - Absolute imports for project files
+   - Relative imports only for files in same directory
+
+### Backend Organization Rules
+
+1. Module Structure
+   - API endpoints in `backend/src/api/`
+   - Business logic in `backend/src/services/`
+   - Database models in `backend/src/models/`
+   - Utility functions in `backend/src/utils/`
+
+2. Naming Conventions
+   - Python files: snake_case
+   - Classes: PascalCase
+   - Functions/variables: snake_case
+   - Constants: UPPER_SNAKE_CASE
+
+3. Test Organization
+   - Mirror src directory structure in tests
+   - Use pytest fixtures in conftest.py
+   - Name test files: test_*.py
+
+### Component Flow Diagram
+
+```mermaid
+graph TD
+    A[App] --> B[RepositoryInput]
+    A --> C[AnalysisView]
+    C --> D[CodeQualityView]
+    C --> E[DocumentationView]
+    C --> F[BestPracticesView]
+    D & E & F --> G[RepoCard]
+    D & E & F --> H[CodeViewer]
+```
+
+### State Management Flow
+
+```mermaid
+graph LR
+    A[User Input] --> B[Repository URL]
+    B --> C[Analysis Request]
+    C --> D[API Client]
+    D --> E[Backend API]
+    E --> F[Analysis Results]
+    F --> G[UI Updates]
+```
+
+### Development Guidelines
+
+1. Creating New Components
+   - Place in appropriate directory based on purpose
+   - Create accompanying test file
+   - Update barrel file (index.ts)
+   - Add to README component list
+
+2. Code Organization
+   - Keep components focused and single-purpose
+   - Extract reusable logic to hooks
+   - Use TypeScript interfaces for props
+   - Document component props and functions
+
+3. Testing Standards
+   - Unit tests for all components
+   - Integration tests for flows
+   - E2E tests for critical paths
+   - Test coverage > 80%
 
 ## System Architecture
 
@@ -453,8 +661,8 @@ sequenceDiagram
    - `src/main.tsx`: Legacy frontend entry point (to be removed)
 
 3. **Layout Components**:
-   - `frontend/src/components/layout/MainHeader.tsx`: Application header
-   - `frontend/src/components/layout/MainNavbar.tsx`: Navigation bar
+   - `frontend/src/components/layout/Header.tsx`: Application header
+   - `frontend/src/components/layout/Sidebar.tsx`: Navigation bar
 
 ### Duplicate Files (Need Cleanup)
 
@@ -482,41 +690,6 @@ repo-analyzer/
         ├── main.tsx         # Frontend entry
         ├── components/      # React components
         └── api/            # API client
-```
-
-## Project Structure and Organization
-
-```
-repository-analyzer/
-├── backend/                    # FastAPI backend application
-│   ├── src/                   # Main backend source code
-│   │   ├── api/              # API endpoints and routes
-│   │   │   ├── routes/       # Route handlers
-│   │   │   └── schemas/      # API request/response schemas
-│   │   ├── core/             # Core functionality
-│   │   ├── middleware/       # Application middleware
-│   │   │   └── error_handler.py  # Error handling middleware
-│   │   ├── models/           # Database models
-│   │   ├── schemas/          # Pydantic schemas
-│   │   └── services/         # Business logic
-│   ├── tests/                # Test files
-│   ├── alembic/            # Database migrations
-│   ├── scripts/            # Utility scripts
-│   ├── middleware/         # Custom middleware
-│   └── requirements.txt    # Python dependencies
-├── frontend/                  # React frontend application
-│   ├── src/
-│   │   ├── api/             # API client and interfaces
-│   │   ├── components/      # React components
-│   │   │   ├── shared/     # Shared components
-│   │   │   ├── layout/     # Layout components
-│   │   │   ├── analysis/   # Analysis components
-│   │   │   └── repo/       # Repository components
-│   │   ├── pages/          # Page components
-│   │   ├── hooks/          # Custom React hooks
-│   │   └── utils/          # Utility functions
-│   └── tests/              # Frontend tests
-└── docs/                   # Documentation
 ```
 
 ## API Configuration
@@ -1099,5 +1272,190 @@ Benefits:
   - Add message persistence
   - Add typing indicators
   - Add message reactions
+
+### Component Integration
+
+Our UI components are designed to work seamlessly with the repository analysis features:
+
+1. **File Explorer**
+   ```typescript
+   import { ScrollArea, Button } from "@/components/common/ui";
+   
+   export function FileExplorer() {
+     return (
+       <ScrollArea className="h-screen">
+         <div className="p-4">
+           <Button variant="outline" onClick={handleRefresh}>
+             Refresh Files
+           </Button>
+           {/* File tree implementation */}
+         </div>
+       </ScrollArea>
+     );
+   }
+   ```
+
+2. **Analysis Results**
+   ```typescript
+   import { Card, Badge, Progress } from "@/components/common/ui";
+   
+   export function AnalysisResult({ pattern, confidence }) {
+     return (
+       <Card>
+         <Card.Header>
+           <h3>Pattern Detection</h3>
+           <Badge variant={confidence > 0.8 ? "success" : "warning"}>
+             {Math.round(confidence * 100)}% Confidence
+           </Badge>
+         </Card.Header>
+         <Card.Content>
+           <Progress value={confidence * 100} />
+         </Card.Content>
+       </Card>
+     );
+   }
+   ```
+
+3. **Repository Actions**
+   ```typescript
+   import { 
+     DropdownMenu,
+     DropdownMenuTrigger,
+     DropdownMenuContent,
+     DropdownMenuItem
+   } from "@/components/common/ui";
+   
+   export function RepoActions() {
+     return (
+       <DropdownMenu>
+         <DropdownMenuTrigger>Actions</DropdownMenuTrigger>
+         <DropdownMenuContent>
+           <DropdownMenuItem onClick={handleAnalyze}>
+             Analyze Repository
+           </DropdownMenuItem>
+           <DropdownMenuItem onClick={handleExport}>
+             Export Results
+           </DropdownMenuItem>
+         </DropdownMenuContent>
+       </DropdownMenu>
+     );
+   }
+   ```
+
+### Error Handling
+
+Our components include built-in error handling and feedback:
+
+```typescript
+import { Toast, ToastProvider } from "@/components/common/ui";
+
+export function ErrorToast({ error }) {
+  return (
+    <Toast variant="destructive">
+      <Toast.Title>Error</Toast.Title>
+      <Toast.Description>{error.message}</Toast.Description>
+    </Toast>
+  );
+}
+```
+
+### Accessibility Features
+
+Our UI components follow WCAG guidelines:
+
+1. **Keyboard Navigation**
+   - All interactive elements are focusable
+   - Logical tab order
+   - Clear focus indicators
+
+2. **Screen Readers**
+   - ARIA labels and roles
+   - Meaningful descriptions
+   - Status announcements
+
+3. **Color Contrast**
+   - WCAG 2.1 AA compliant
+   - Dark mode support
+   - High contrast mode
+
+### Performance Optimization
+
+1. **Code Splitting**
+   ```typescript
+   // pages/RepoAnalysis.tsx
+   const CodeViewer = React.lazy(() => import("@/components/CodeViewer"));
+   const PatternView = React.lazy(() => import("@/components/PatternView"));
+   ```
+
+2. **Efficient Rendering**
+   ```typescript
+   // Memoized components
+   const MemoizedFileTree = React.memo(FileTree);
+   const MemoizedAnalysisResult = React.memo(AnalysisResult);
+   ```
+
+3. **Virtual Lists**
+   ```typescript
+   import { ScrollArea } from "@/components/common/ui";
+   
+   function FileList({ files }) {
+     return (
+       <ScrollArea className="h-[400px]">
+         {files.map(file => (
+           <FileItem key={file.id} file={file} />
+         ))}
+       </ScrollArea>
+     );
+   }
+   ```
+
+### Testing Strategy
+
+1. **Component Tests**
+   ```typescript
+   import { render, screen } from "@testing-library/react";
+   import { Button } from "@/components/common/ui";
+   
+   describe("Button", () => {
+     it("renders with correct variant", () => {
+       render(<Button variant="destructive">Delete</Button>);
+       expect(screen.getByRole("button")).toHaveClass("bg-destructive");
+     });
+   });
+   ```
+
+2. **Integration Tests**
+   ```typescript
+   import { render, screen, fireEvent } from "@testing-library/react";
+   import { RepoAnalysis } from "@/pages/RepoAnalysis";
+   
+   describe("RepoAnalysis", () => {
+     it("shows analysis results", async () => {
+       render(<RepoAnalysis />);
+       fireEvent.click(screen.getByText("Analyze"));
+       expect(await screen.findByText("Results")).toBeInTheDocument();
+     });
+   });
+   ```
+
+### Development Guidelines
+
+1. **Component Creation**
+   - Place in appropriate directory under `ui/`
+   - Export through barrel file
+   - Include TypeScript types
+   - Add to documentation
+
+2. **Styling**
+   - Use Tailwind CSS classes
+   - Follow design token system
+   - Support dark mode
+   - Maintain responsive design
+
+3. **State Management**
+   - Use React hooks effectively
+   - Implement proper error boundaries
+   - Handle loading states
+   - Manage side effects
 
 ```

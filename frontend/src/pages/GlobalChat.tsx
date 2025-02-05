@@ -1,12 +1,12 @@
-import { useState } from 'react'
-import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
-import { useToast } from '../components/ui/use-toast'
-import { Loader2, Send } from 'lucide-react'
-import { ScrollArea } from '../components/ui/scroll-area'
-import { useRepo } from '../context/RepoContext'
-import { Checkbox } from '../components/ui/checkbox'
+import React, { useState, useEffect } from 'react';
+import { Button } from '@components/common/ui/button';
+import { Input } from '@components/common/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/common/ui/card';
+import { useToast } from '@components/common/ui/use-toast';
+import { ScrollArea } from '@components/common/ui/scroll-area';
+import { useRepo } from '@context/RepoContext';
+import { Checkbox } from '@components/common/ui/checkbox';
+import { Send, Loader2 } from 'lucide-react';
 
 interface Message {
   role: 'user' | 'assistant'

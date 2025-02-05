@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
-import { useToast } from '../components/ui/use-toast'
-import { Loader2, GitBranch } from 'lucide-react'
-import { Progress } from '../components/ui/progress'
-import { processRepo } from '../api/client'
-import { useRepo } from '../context/RepoContext'
-import type { Repository } from '../api/types'
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@components/common/ui/button';
+import { Input } from '@components/common/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/common/ui/card';
+import { useToast } from '@components/common/ui/use-toast';
+import { Loader2, GitBranch } from 'lucide-react';
+import { Progress } from '@components/common/ui/progress';
+import { processRepo } from '@api/client';
+import { useRepo } from '@context/RepoContext';
+import type { Repository } from '@api/types';
 
 export default function LoadRepo() {
   const [url, setUrl] = useState('')

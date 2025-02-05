@@ -1,12 +1,12 @@
-import { useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { Button } from '../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
-import { Input } from '../components/ui/input'
-import { ScrollArea } from '../components/ui/scroll-area'
-import { useToast } from '../components/ui/use-toast'
-import { Copy, Search } from 'lucide-react'
-import { useRepo } from '../context/RepoContext'
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import { Button } from '@components/common/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/common/ui/card';
+import { Input } from '@components/common/ui/input';
+import { ScrollArea } from '@components/common/ui/scroll-area';
+import { useToast } from '@components/common/ui/use-toast';
+import { Copy, Search } from 'lucide-react';
+import { useRepo } from '@context/RepoContext';
 
 interface BestPractice {
   id: string
@@ -22,7 +22,7 @@ export default function BestPractices() {
   const { id } = useParams<{ id: string }>()
   const { repositories } = useRepo()
   const { toast } = useToast()
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = React.useState('')
 
   // If we have an id, we're looking at repo-specific best practices
   const repository = id ? repositories.find(r => r.id === id) : null

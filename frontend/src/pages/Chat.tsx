@@ -1,14 +1,14 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Textarea } from '../components/ui/textarea';
-import { useToast } from '../components/ui/use-toast';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@components/common/ui/card';
+import { Button } from '@components/common/ui/button';
+import { Textarea } from '@components/common/ui/textarea';
+import { useToast } from '@components/common/ui/use-toast';
+import { ScrollArea } from '@components/common/ui/scroll-area';
+import { createChatMessage, getChatHistory } from '@api/client';
+import type { ChatMessage } from '@api/types';
+import { RepoSelector } from '@components/common/chat/RepoSelector';
 import { Loader2, Send, ChevronDown } from 'lucide-react';
-import { createChatMessage, getChatHistory } from '../api/client';
-import type { ChatMessage } from '../api/types';
-import { RepoSelector } from '../components/chat/RepoSelector';
-import { ScrollArea } from '../components/ui/scroll-area';
 
 interface Repo {
   repo_url: string;

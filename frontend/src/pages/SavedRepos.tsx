@@ -1,16 +1,16 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useRepo } from '../context/RepoContext';
-import { Card, CardContent } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { useToast } from '../components/ui/use-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { Badge } from '../components/ui/badge';
-import { ScrollArea } from '../components/ui/scroll-area';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
-import { Loader2, RefreshCw, Trash2, Search, GitBranch, Code, Clock, MoreVertical, FileText } from 'lucide-react';
-import { Progress } from '../components/ui/progress';
+import { useRepo } from '@context/RepoContext';
+import { Card, CardContent } from '@components/common/ui/card';
+import { Button } from '@components/common/ui/button';
+import { Input } from '@components/common/ui/input';
+import { useToast } from '@components/common/ui/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/common/ui/select';
+import { Badge } from '@components/common/ui/badge';
+import { ScrollArea } from '@components/common/ui/scroll-area';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@components/common/ui/dropdown-menu';
+import { Progress } from '@components/common/ui/progress';
+import { Search, MoreVertical, Loader2, RefreshCw, Trash2, GitBranch, Code, Clock, FileText } from 'lucide-react';
 
 interface Repo {
   repo_url: string;

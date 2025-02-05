@@ -10,7 +10,7 @@ interface ErrorBoundaryState {
   error: Error | null;
 }
 
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -28,13 +28,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     if (this.state.hasError) {
       return (
         <Container size="md" py="xl">
-          <Title order={2} size="h1" style={{ textAlign: 'center' }}>
+          <Title order={2} ta="center">
             Something went wrong
           </Title>
-          <Text c="dimmed" size="lg" style={{ textAlign: 'center' }}>
+          <Text c="dimmed" size="lg" ta="center">
             {this.state.error?.message || 'An unexpected error occurred'}
           </Text>
-          <Group position="center" mt="xl">
+          <Group justify="center" mt="xl">
             <Button
               variant="outline"
               size="md"
@@ -53,3 +53,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     return this.props.children;
   }
 }
+
+// Export both the base ErrorBoundary and the AppErrorBoundary
+export { ErrorBoundary };
+export const AppErrorBoundary = ErrorBoundary;

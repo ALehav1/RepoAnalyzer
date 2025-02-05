@@ -1,9 +1,11 @@
+import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { ScrollArea } from '../components/ui/scroll-area';
-import { Badge } from '../components/ui/badge';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/common/ui/card';
+import { Button } from '@components/common/ui/button';
+import { ScrollArea } from '@components/common/ui/scroll-area';
+import { Badge } from '@components/common/ui/badge';
 import { ChevronLeft, FileCode, GitBranch } from 'lucide-react';
+import { useAnalysisStream } from '@hooks/useAnalysisStream';
 
 interface AnalysisProps {
   repository_url: string;
