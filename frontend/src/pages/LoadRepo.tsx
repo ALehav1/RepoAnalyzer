@@ -18,14 +18,12 @@ export default function LoadRepo() {
   const { toast } = useToast()
   const { refreshRepositories, pollRepository, repositories } = useRepo()
 
-  // Watch for repository status changes
   useEffect(() => {
     if (repository) {
       const updatedRepo = repositories.find(r => r.id === repository.id)
       if (updatedRepo) {
         setRepository(updatedRepo)
         
-        // Navigate when analysis is complete
         if (updatedRepo.analysis_status === 'completed') {
           toast({
             title: 'Success',
@@ -34,7 +32,6 @@ export default function LoadRepo() {
           navigate(`/repos/${updatedRepo.id}`)
         }
         
-        // Handle failed analysis
         if (updatedRepo.analysis_status === 'failed') {
           toast({
             title: 'Error',
@@ -65,7 +62,6 @@ export default function LoadRepo() {
       const repo = await processRepo(url)
       setRepository(repo)
       
-      // Start polling the repository
       pollRepository(repo.id)
       
       toast({

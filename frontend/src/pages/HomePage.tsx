@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import * as React from "react";
 import { useNavigate } from 'react-router-dom';
 import repoApi, { AnalyzeRepoRequest } from '@api/repoApi';
 import { useRepo } from '@context/RepoContext';
@@ -19,25 +19,34 @@ interface AnalysisFormData {
 }
 
 export function HomePage() {
-  const [repoUrl, setRepoUrl] = useState('');
+  const [repoUrl, setRepoUrl] = React.useState('');
   const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleSuccess = React.useCallback(() => {
+    toast({
+      title: 'Success',
+      message: 'Repository analysis started successfully',
+      color: 'green',
+    });
+  }, [toast]);
+
+  const handleError = React.useCallback((error: any) => {
+    toast({
+      title: 'Error',
+      message: error.message || 'Failed to analyze repository',
+      color: 'red',
+    });
+  }, [toast]);
 
   const analysisMutation = useMutation({
     mutationFn: (data: AnalysisFormData) => repoApi.analyzeRepo({ url: data.repoUrl }),
     onSuccess: (data) => {
-      useToast({
-        title: 'Success',
-        message: 'Repository analysis started successfully',
-        color: 'green',
-      });
+      handleSuccess();
       navigate(`/repo/${data.repoId}`);
     },
     onError: (error: any) => {
-      useToast({
-        title: 'Error',
-        message: error.message || 'Failed to analyze repository',
-        color: 'red',
-      });
+      handleError(error);
     },
   });
 

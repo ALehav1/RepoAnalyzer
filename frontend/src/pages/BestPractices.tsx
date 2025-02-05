@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from "react";
 import { useParams } from 'react-router-dom';
 import { Button } from '@components/common/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/common/ui/card';

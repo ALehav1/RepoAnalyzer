@@ -1,27 +1,26 @@
-import React, { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { Card } from '@components/common/ui/card'
-import { useRepo } from '@context/RepoContext'
-import { useToast } from '@components/common/ui/use-toast'
-import { Button } from '@components/common/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/common/ui/tabs'
-import { FileTree } from '@components/repository/FileTree'
-import { ScrollArea } from '@components/common/ui/scroll-area'
-import { Loader2 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import CodeQualityView from '@components/repository/CodeQualityView'
-import DocumentationView from '@components/repository/DocumentationView'
-import BestPracticesView from '@components/repository/BestPracticesView'
+import * as React from "react";
+import { useParams } from "react-router-dom";
+import { Card } from "@/components/common/ui";
+import { useRepo } from '@context/RepoContext';
+import { useToast } from '@components/common/ui/use-toast';
+import { useNavigate } from 'react-router-dom';
+import CodeQualityView from '@components/repository/CodeQualityView';
+import DocumentationView from '@components/repository/DocumentationView';
+import BestPracticesView from '@components/repository/BestPracticesView';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@components/common/ui/tabs';
+import { FileTree } from '@components/repository/FileTree';
+import { ScrollArea } from '@components/common/ui/scroll-area';
+import { Loader2 } from 'lucide-react';
 
-export default function RepoDetail() {
-  const { id } = useParams<{ id: string }>()
-  const { repositories } = useRepo()
-  const { toast } = useToast()
-  const navigate = useNavigate()
+export function RepoDetail() {
+  const { id } = useParams<{ id: string }>();
+  const { repositories } = useRepo();
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const repository = repositories.find((r) => r.id === id)
+  const repository = repositories.find((r) => r.id === id);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!repository) {
       toast({
         title: 'Repository not found',
@@ -64,12 +63,6 @@ export default function RepoDetail() {
           <TabsTrigger value="code-quality">Code Quality</TabsTrigger>
           <TabsTrigger value="documentation">Documentation</TabsTrigger>
           <TabsTrigger value="best-practices">Best Practices</TabsTrigger>
-          <TabsTrigger value="chat" asChild>
-            <Link to={`/repos/${id}/chat`}>Chat</Link>
-          </TabsTrigger>
-          <TabsTrigger value="practices" asChild>
-            <Link to={`/repos/${id}/practices`}>Best Practices</Link>
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="summary" className="space-y-4">

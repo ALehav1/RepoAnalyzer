@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import * as React from "react";
 import { Button } from '@components/common/ui/button';
 import { Input } from '@components/common/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@components/common/ui/card';
@@ -14,12 +14,12 @@ interface Message {
 }
 
 export default function GlobalChat() {
-  const [message, setMessage] = useState('')
-  const [messages, setMessages] = useState<Message[]>([])
-  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = React.useState('')
+  const [messages, setMessages] = React.useState<Message[]>([])
+  const [loading, setLoading] = React.useState(false)
   const { repositories } = useRepo()
   const { toast } = useToast()
-  const [selectedRepos, setSelectedRepos] = useState<string[]>([])
+  const [selectedRepos, setSelectedRepos] = React.useState<string[]>([])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

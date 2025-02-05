@@ -63,7 +63,7 @@ export default function Chat() {
     if (savedMessages) {
       setMessages(JSON.parse(savedMessages));
     }
-  }, [searchParams]);
+  }, [searchParams, selectedRepos]);
 
   useEffect(() => {
     // Save messages to localStorage whenever they change
@@ -71,6 +71,16 @@ export default function Chat() {
     // Scroll to bottom
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    if (selectedRepos.length === 0) {
+      toast({
+        title: "No repositories selected",
+        description: "Please select at least one repository to start chatting.",
+        variant: "warning",
+      });
+    }
+  }, [selectedRepos, toast]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
