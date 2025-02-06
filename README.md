@@ -6,91 +6,248 @@ A powerful knowledge management platform that analyzes GitHub repositories for c
 
 Current Version: 0.1.0
 
-### Latest Changes (2025-02-05)
+### Latest Changes (2025-02-06)
 
-- Cleaned up Layout Components
-  - Consolidated duplicate components
-  - Removed: AppShellLayout, MainHeader, MainNavbar, AppNavbar
-  - Standardized on: AppShell, Header, Sidebar, ErrorBoundary
-  - Consistent styling with Tailwind CSS
-  - Improved component organization
-- Improved Project Structure
-  - Removed duplicate README files
-  - Consolidated documentation
-  - Updated component exports
-  - Cleaner imports
-- Implemented Custom UI Component System
-  - Built on Radix UI primitives for accessibility
-  - Styled with Tailwind CSS for consistent design
-  - Dark mode support out of the box
-  - Type-safe components with TypeScript
-  - Proper component organization with barrel files
-- Enhanced UI Components
-  - Button: Versatile button component with variants
-  - Card: Flexible card layout with header/footer
-  - Dialog: Modal dialogs with animations
-  - Input: Form inputs with validation states
-  - Select: Accessible dropdown select
-  - Checkbox: Interactive checkbox component
-  - Progress: Progress indicators
-  - Toast: Notification system
-  - Badge: Status indicators
-  - ScrollArea: Custom scrollbars
-  - DropdownMenu: Complex menu systems
-- Improved Project Structure
-  - Path aliases for cleaner imports
-  - Barrel files for component exports
-  - Consistent file organization
-  - Enhanced type safety
-- Added comprehensive component documentation
-- Implemented modern design system
-- Fixed component accessibility issues
-- Added animation and transition support
+- Enhanced VectorStore component:
+  - Improved metadata filtering with exact matching
+  - Added robust collection cleanup between operations
+  - Fixed duplicate chunk handling
+  - Added comprehensive test coverage
+  - Improved error handling and logging
+- Implemented robust database initialization with SQLAlchemy
+- Added core analysis components:
+  - `CodeChunker`: Splits code into meaningful chunks with metadata
+  - `CodeAnalyzer`: Analyzes code chunks for quality, complexity, and security
+  - `VectorStore`: Stores and retrieves code chunks using vector embeddings
+- Added comprehensive test suite for all components
 
-## Project Status
+### Component Structure
 
-### 1. Core Infrastructure [IN PROGRESS]
+```
+backend/
+├── src/
+│   ├── api/              # FastAPI endpoints
+│   ├── analysis/         # Code analysis components
+│   │   ├── analyzer.py   # Code quality analysis
+│   │   └── chunker.py    # Code chunking logic
+│   ├── storage/          # Data persistence
+│   │   └── vector_store.py  # Vector-based code storage
+│   ├── models/          # SQLAlchemy models
+│   └── database.py      # Database configuration
+├── tests/              # Test suite
+│   └── test_components.py  # Component tests
+└── data/              # Database and file storage
+    └── repo_analyzer.db   # SQLite database
+```
 
-- [x] Project structure setup
-- [x] FastAPI backend with async support
-- [x] Pattern detection service
-- [x] Database integration with SQLAlchemy
-- [x] Environment configuration
-- [x] API endpoint testing
-- [ ] Complete API documentation
-- [ ] Frontend development
+### Database Schema
 
-### 2. Pattern Detection Features [IN PROGRESS]
+The system uses SQLAlchemy 2.0 with async support. Key models include:
 
-- [x] AST-based code analysis
-- [x] Pattern confidence scoring
-- [x] Pattern relationship tracking
-- [x] Context-aware analysis
-- [x] Input validation and error handling
-- [ ] Additional pattern support
-- [ ] Pattern visualization
+1. **Repository**
 
-## Known Limitations
+   - Stores repository information
+   - Fields:
+     - id: UUID primary key
+     - name: Repository name
+     - owner: Repository owner
+     - url: Repository URL
+     - created_at: Timestamp
+     - updated_at: Timestamp
 
-1. **Pattern Detection**
+2. **CodeChunk**
 
-   - Currently supports only Python files
-   - Limited to basic design patterns (Factory, Singleton, Observer)
-   - Pattern confidence scoring may need manual verification
-   - Large files (>10k LOC) may impact performance
+   - Stores code segments with metadata
+   - Fields:
+     - id: UUID primary key
+     - content: Code content
+     - file_path: Path to source file
+     - start_line: Starting line number
+     - end_line: Ending line number
+     - language: Programming language
+     - repository_id: Foreign key to Repository
+     - metadata: JSONB field for additional metadata
+     - created_at: Timestamp
+     - updated_at: Timestamp
 
-2. **Analysis Features**
+3. **AnalysisResult**
+   - Stores code analysis results
+   - Fields:
+     - id: UUID primary key
+     - analysis_type: Type of analysis
+     - score: Analysis score
+     - details: JSONB field for detailed results
+     - repository_id: Foreign key to Repository
+     - created_at: Timestamp
+     - updated_at: Timestamp
 
-   - Code quality metrics are basic (complexity, lines of code)
-   - Documentation analysis is limited to docstring presence
-   - No support for custom pattern definitions
-   - Performance may degrade with repositories >1GB
+### Core Components
 
-3. **Frontend Features**
-   - Basic visualization capabilities
-   - Limited real-time updates
-   - No offline support
-   - Mobile view is not optimized
+1. **CodeChunker**
+
+   - Splits code files into logical chunks
+   - Extracts metadata (file path, line numbers, size)
+   - Handles multiple programming languages
+
+2. **CodeAnalyzer**
+
+   - Analyzes code quality metrics:
+     - Complexity (cyclomatic, nested functions)
+     - Quality (documentation, naming)
+     - Security (unsafe patterns)
+     - Performance metrics
+   - Async processing for better performance
+
+3. **VectorStore**
+   - Stores code chunks with vector embeddings using ChromaDB
+   - Enables semantic code search with metadata filtering
+   - Supports:
+     - Exact metadata matching with `$eq` operator
+     - Batch operations for multiple chunks
+     - Duplicate chunk ID handling
+     - Collection cleanup and reset
+   - Efficient similarity matching
+   - Uses cosine similarity for vector comparisons
+   - Comprehensive error handling and logging
+   - Proper async/await support
+   - Test isolation with collection cleanup
+
+### Testing
+
+The backend includes comprehensive tests:
+
+- Unit tests for each component
+- Integration tests for database operations
+- Async test support with pytest-asyncio
+- Proper test database isolation
+- VectorStore specific tests:
+  - Metadata filtering
+  - Batch operations
+  - Duplicate chunk handling
+  - Empty query handling
+  - Collection cleanup
+
+### Development Setup
+
+1. Create and activate virtual environment:
+
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+2. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Set up the database:
+
+```bash
+python -m src.database
+```
+
+4. Run tests:
+
+```bash
+python -m pytest
+```
+
+## Project Status and TODO
+
+### Current State (2025-02-06)
+
+1. Core Components
+
+   - VectorStore: Working with tests passing
+   - Database: SQLAlchemy 2.0 setup with async support
+   - Tests: Basic framework set up with pytest and coverage
+
+2. Code Organization Issues
+
+   - Duplicate service files need consolidation
+   - Inconsistent directory structure
+   - Multiple database-related files scattered
+
+3. Technical Debt
+   - Pydantic v2 warnings in dependencies
+   - Some deprecated SQLAlchemy patterns
+   - Incomplete test coverage
+
+### TODO List
+
+1. High Priority
+
+   - [ ] Consolidate duplicate service files:
+     - [ ] Best practices analyzers
+     - [ ] Code quality services
+     - [ ] Documentation analyzers
+     - [ ] Vector store implementations
+   - [ ] Standardize directory structure:
+     - [ ] Move all services to `src/services`
+     - [ ] Move all schemas to `src/schemas`
+     - [ ] Consolidate database files
+   - [ ] Add missing tests for core functionality
+
+2. Medium Priority
+
+   - [ ] Update dependencies to latest versions
+   - [ ] Improve error handling and logging
+   - [ ] Add performance metrics
+   - [ ] Implement caching strategy
+
+3. Low Priority
+   - [ ] Add API documentation
+   - [ ] Improve code comments
+   - [ ] Set up CI/CD pipeline
+   - [ ] Add development guidelines
+
+### Directory Structure (Target)
+
+```
+backend/
+├── src/
+│   ├── api/              # FastAPI endpoints
+│   │   ├── routes/       # API route handlers
+│   │   └── middleware/   # API middleware
+│   ├── services/         # Business logic
+│   │   ├── analyzer/     # Code analysis
+│   │   ├── storage/      # Data storage
+│   │   └── github/       # GitHub integration
+│   ├── schemas/          # Pydantic models
+│   ├── models/           # SQLAlchemy models
+│   ├── core/             # Core functionality
+│   │   ├── config.py     # Configuration
+│   │   ├── logging.py    # Logging setup
+│   │   └── exceptions.py # Custom exceptions
+│   └── utils/            # Utility functions
+├── tests/                # Test suite
+│   ├── unit/            # Unit tests
+│   ├── integration/     # Integration tests
+│   └── conftest.py      # Test configuration
+├── alembic/             # Database migrations
+└── scripts/             # Utility scripts
+```
+
+### Next Steps
+
+1. File Cleanup
+
+   - Remove duplicate service files
+   - Consolidate database-related code
+   - Organize tests by type
+
+2. Testing
+
+   - Add missing test cases
+   - Improve test coverage
+   - Add integration tests
+
+3. Documentation
+   - Update API documentation
+   - Add inline code comments
+   - Create development guide
 
 ## UI/UX Design Plan
 
@@ -101,11 +258,13 @@ Current Version: 0.1.0
 The application uses a custom AppShell component for consistent layout:
 
 - **Header Component** (`Header.tsx`)
+
   - Height: 60px
   - Contains: Logo, toggle button, and user controls
   - Responsive design with mobile support
 
 - **Sidebar Component** (`Sidebar.tsx`)
+
   - Width: 300px (collapsible on mobile)
   - Contains: Navigation links with icons
   - Sections:
@@ -123,11 +282,13 @@ The application uses a custom AppShell component for consistent layout:
 #### 1.2 Component Architecture
 
 - **AppShell**
+
   ```typescript
   interface AppShellProps {
     children: React.ReactNode;
   }
   ```
+
   - Manages layout state (opened/closed)
   - Handles responsive behavior
   - Provides consistent padding and spacing
@@ -149,7 +310,7 @@ The application uses a custom AppShell component for consistent layout:
 - Using Tailwind CSS for styling
 - CSS modules for component-specific styles
 - Responsive breakpoints:
-  - Mobile: < 768px (collapsed sidebar)
+  - Mobile: < 768px
   - Tablet: 768px - 992px
   - Desktop: > 992px
 
@@ -158,11 +319,13 @@ The application uses a custom AppShell component for consistent layout:
 #### 2.1 Fixed Issues
 
 1. **AppShell Props**
+
    - Removed invalid `opened` boolean prop from div element
    - State management moved to internal component logic
    - Fixed prop type warnings
 
 2. **Navigation State**
+
    - Proper state management using React Router
    - Active route highlighting
    - Smooth transitions between routes
@@ -190,8 +353,8 @@ frontend/
 │   │   │   ├── ui/           # Reusable UI components
 │   │   │   │   ├── button.tsx
 │   │   │   │   ├── card.tsx
-│   │   │   │   └── index.ts  # Barrel file
-│   │   │   └── index.ts      # Barrel file
+│   │   │   │   └── ...
+│   │   │   └── index.ts  # Barrel file
 │   │   ├── repository/       # Repository-specific components
 │   │   └── layout/          # Layout components
 │   ├── lib/
@@ -208,17 +371,18 @@ We use path aliases and barrel files to keep imports clean and maintainable:
 
 ```typescript
 // ✅ Good: Using path aliases and barrel files
-import { Button, Card } from "@/components/common/ui";
-import { cn } from "@/lib/utils";
+import { Button, Card } from '@/components/common/ui';
+import { cn } from '@/lib/utils';
 
 // ❌ Bad: Direct imports without aliases
-import { Button } from "../../components/common/ui/button";
-import { cn } from "../../../lib/utils";
+import { Button } from '../../components/common/ui/button';
+import { cn } from '../../../lib/utils';
 ```
 
 ### UI Component System
 
 Our UI components are built with:
+
 - Radix UI primitives for accessibility
 - Tailwind CSS for styling
 - TypeScript for type safety
@@ -263,16 +427,19 @@ Our design system uses CSS variables for theming:
 Each UI component follows these principles:
 
 1. **Accessibility First**
+
    - ARIA labels and roles
    - Keyboard navigation
    - Screen reader support
 
 2. **Type Safety**
+
    - Full TypeScript support
    - Proper prop types
    - Variant definitions
 
 3. **Customization**
+
    - Variant support
    - Custom class names
    - Theme integration
@@ -285,30 +452,30 @@ Each UI component follows these principles:
 Example component with variants:
 
 ```typescript
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva, type VariantProps } from 'class-variance-authority';
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50",
+  'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
-        outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: 'bg-primary text-primary-foreground shadow hover:bg-primary/90',
+        destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90',
+        outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
+        secondary: 'bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80',
+        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {
-        default: "h-9 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-10 rounded-md px-8",
-        icon: "h-9 w-9",
+        default: 'h-9 px-4 py-2',
+        sm: 'h-8 rounded-md px-3 text-xs',
+        lg: 'h-10 rounded-md px-8',
+        icon: 'h-9 w-9',
       },
     },
     defaultVariants: {
-      variant: "default",
-      size: "default",
+      variant: 'default',
+      size: 'default',
     },
   }
 );
@@ -464,492 +631,172 @@ export const theme = {
   - [ ] Keyboard support
   - [ ] Screen reader testing
 
-## Project Organization
+## Error Handling and Loading States
 
-### Directory Structure
+### 1. Error Boundaries
 
-```
-repo-analyzer/
-├── frontend/
-│   └── src/
-│       ├── api/
-│       │   └── client.ts     # API client configuration
-│       ├── components/
-│       │   ├── common/       # Shared/reusable components
-│       │   │   └── ui/       # Reusable UI components
-│       │   ├── repository/   # Repository analysis components
-│       │   └── layout/       # Layout components
-│       ├── hooks/           # Custom React hooks
-│       ├── theme/           # Mantine theme configuration
-│       └── utils/           # Utility functions
-│   ├── public/              # Static assets
-│   └── tests/               # Frontend tests
-├── backend/
-│   ├── src/
-│   │   ├── api/            # API endpoints and routing
-│   │   ├── core/           # Core functionality
-│   │   ├── services/       # Business logic
-│   │   └── utils/          # Utility functions
-│   └── tests/              # Backend tests
-└── docs/                   # Documentation
-```
-
-### Frontend Organization Rules
-
-1. Component Structure
-   - All components must be in `frontend/src/components/`
-   - Use appropriate subdirectory based on component type:
-     - `common/`: Reusable components (buttons, inputs, etc.)
-     - `layout/`: Layout components (AppShell, Navbar, etc.)
-     - `repository/`: Repository analysis components
-
-2. Naming Conventions
-   - Components: PascalCase (e.g., `RepositoryInput.tsx`)
-   - Utilities: camelCase (e.g., `apiClient.ts`)
-   - Test files: ComponentName.test.tsx
-   - CSS modules: ComponentName.module.css
-
-3. File Organization
-   - Each component directory should have:
-     - Component file (TSX)
-     - Tests directory (`__tests__`)
-     - CSS modules (if needed)
-     - Index file for exports
-
-4. Import Standards
-   - Use barrel exports (index.ts) for cleaner imports
-   - Absolute imports for project files
-   - Relative imports only for files in same directory
-
-### Backend Organization Rules
-
-1. Module Structure
-   - API endpoints in `backend/src/api/`
-   - Business logic in `backend/src/services/`
-   - Database models in `backend/src/models/`
-   - Utility functions in `backend/src/utils/`
-
-2. Naming Conventions
-   - Python files: snake_case
-   - Classes: PascalCase
-   - Functions/variables: snake_case
-   - Constants: UPPER_SNAKE_CASE
-
-3. Test Organization
-   - Mirror src directory structure in tests
-   - Use pytest fixtures in conftest.py
-   - Name test files: test_*.py
-
-### Component Flow Diagram
-
-```mermaid
-graph TD
-    A[App] --> B[RepositoryInput]
-    A --> C[AnalysisView]
-    C --> D[CodeQualityView]
-    C --> E[DocumentationView]
-    C --> F[BestPracticesView]
-    D & E & F --> G[RepoCard]
-    D & E & F --> H[CodeViewer]
-```
-
-### State Management Flow
-
-```mermaid
-graph LR
-    A[User Input] --> B[Repository URL]
-    B --> C[Analysis Request]
-    C --> D[API Client]
-    D --> E[Backend API]
-    E --> F[Analysis Results]
-    F --> G[UI Updates]
-```
-
-### Development Guidelines
-
-1. Creating New Components
-   - Place in appropriate directory based on purpose
-   - Create accompanying test file
-   - Update barrel file (index.ts)
-   - Add to README component list
-
-2. Code Organization
-   - Keep components focused and single-purpose
-   - Extract reusable logic to hooks
-   - Use TypeScript interfaces for props
-   - Document component props and functions
-
-3. Testing Standards
-   - Unit tests for all components
-   - Integration tests for flows
-   - E2E tests for critical paths
-   - Test coverage > 80%
-
-## System Architecture
-
-### 1. Backend Architecture
-
-```mermaid
-graph TB
-    subgraph Frontend
-        UI[User Interface]
-        API_Client[API Client]
-    end
-
-    subgraph Backend
-        subgraph API_Layer[API Layer]
-            FastAPI[FastAPI Server]
-            CORS[CORS Middleware]
-            Auth[Auth Middleware]
-            Routes[API Routes]
-        end
-
-        subgraph Core_Services[Core Services]
-            RepoService[Repository Service]
-            AnalysisService[Analysis Service]
-            ChatService[Chat Service]
-            PatternService[Pattern Service]
-        end
-
-        subgraph Data_Layer[Data Layer]
-            DB[(SQLite Database)]
-            VectorStore[Vector Store]
-            FileSystem[File System]
-        end
-    end
-
-    UI --> API_Client
-    API_Client --> FastAPI
-    FastAPI --> CORS
-    CORS --> Routes
-    Routes --> Core_Services
-    Core_Services --> Data_Layer
-```
-
-### 2. Request Flow
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant CORS
-    participant Router
-    participant Service
-    participant Database
-
-    Client->>CORS: HTTP Request
-    CORS->>Router: Validated Request
-    Router->>Service: Process Request
-    Service->>Database: Query/Update
-    Database-->>Service: Response
-    Service-->>Router: Processed Data
-    Router-->>CORS: API Response
-    CORS-->>Client: HTTP Response
-```
-
-## File Structure Notes
-
-### Important Files
-
-1. **Backend Entry Points**:
-
-   - `backend/src/api/main.py`: Main API server with FastAPI setup
-   - `backend/src/main.py`: Legacy entry point (to be removed)
-
-2. **Frontend Entry Points**:
-
-   - `frontend/src/main.tsx`: Current frontend entry point with Mantine setup
-   - `src/main.tsx`: Legacy frontend entry point (to be removed)
-
-3. **Layout Components**:
-   - `frontend/src/components/layout/Header.tsx`: Application header
-   - `frontend/src/components/layout/Sidebar.tsx`: Navigation bar
-
-### Duplicate Files (Need Cleanup)
-
-The following files need to be consolidated or removed:
-
-1. `backend/src/main.py` → Move functionality to `backend/src/api/main.py`
-2. `src/main.tsx` → Move functionality to `frontend/src/main.tsx`
-
-### File Organization
-
-```
-repo-analyzer/
-├── backend/
-│   └── src/
-│       ├── api/
-│       │   ├── main.py       # Main API server
-│       │   ├── routes/       # API route handlers
-│       │   └── schemas/      # Pydantic models
-│       └── core/
-│           ├── config.py     # App configuration
-│           ├── cors.py       # CORS setup
-│           └── logging.py    # Logging config
-└── frontend/
-    └── src/
-        ├── main.tsx         # Frontend entry
-        ├── components/      # React components
-        └── api/            # API client
-```
-
-## API Configuration
-
-### CORS Setup
-
-The application uses a dedicated CORS configuration system to handle cross-origin requests securely:
-
-1. **Configuration Files**:
-
-   - `backend/src/core/cors.py`: Central CORS configuration
-   - `backend/src/core/config.py`: CORS origins and settings
-
-2. **Allowed Origins**:
-
-   ```python
-   CORS_ORIGINS = [
-       "http://localhost:3000",  # React dev server
-       "http://localhost:5173",  # Vite dev server
-       "http://127.0.0.1:3000",
-       "http://127.0.0.1:5173",
-   ]
-   ```
-
-3. **Environment Variables**:
-   - Override CORS settings via `.env`:
-     ```bash
-     CORS_ORIGINS=http://localhost:5173,http://localhost:3000
-     ```
-
-### API Health Checks
-
-The application includes a comprehensive health check system:
-
-1. **Endpoint**: `/health`
-2. **Response Format**:
-   ```json
-   {
-     "status": "healthy",
-     "components": {
-       "database": {
-         "status": "healthy",
-         "message": "Database connection successful"
-       }
-     },
-     "version": "1.0.0"
-   }
-   ```
-3. **Component Status**: Each major component (database, cache, etc.) reports its health status
-4. **Monitoring**: Use this endpoint for uptime monitoring and deployment verification
-
-### API Routes
-
-All API routes are organized in the `backend/src/api/routes` directory:
-
-1. **Health**: `/health` - System health and component status
-2. **Repositories**: `/repos/*` - Repository management and analysis
-3. **Chat**: `/chat/*` - AI-powered code analysis chat
-
-## UI Configuration
-
-### Mantine v7 Setup
-
-The frontend uses Mantine v7 for UI components and theming. Key configurations include:
-
-1. **Theme Configuration**
+The application uses a global error boundary system to catch and handle runtime errors:
 
 ```typescript
-// frontend/src/theme.ts
-export const theme = {
-  // Custom theme configuration
-  colorScheme: 'light',
-  // Add other theme customizations
-};
+// Example usage in routes
+<ErrorBoundary>
+  <Route path="/repositories" element={<RepositoriesPage />} />
+</ErrorBoundary>
 ```
 
-2. **Color Scheme Management**
+Features:
+
+- Catches JavaScript runtime errors
+- Displays user-friendly error messages
+- Provides retry and go back options
+- Logs errors for debugging
+
+### 2. Loading States
+
+Consistent loading indicators across the application:
 
 ```typescript
-// App.tsx
-const [colorScheme, setColorScheme] = useState<'light' | 'dark'>('light');
-const toggleColorScheme = () => {
-  setColorScheme(current => (current === 'dark' ? 'light' : 'dark'));
-};
+// Example usage in components
+<LoadingSpinner
+  text="Loading repository..."
+  size="md"
+  fullHeight
+/>
 ```
 
-3. **MantineProvider Setup**
+Options:
+
+- Sizes: sm, md, lg
+- Optional loading text
+- Center alignment
+- Full height mode
+
+## Storybook Documentation
+
+### 1. Page Stories
+
+Each page component has comprehensive stories:
+
+- **HomePage.stories.tsx**
+
+  - Default state
+  - Loading state
+  - Error state
+
+- **RepositoriesPage.stories.tsx**
+
+  - Default with repository list
+  - Loading state
+  - Empty state
+  - Error state
+
+- **RepositoryAnalysisPage.stories.tsx**
+
+  - Default with analysis
+  - Loading state
+  - Error state
+  - Analysis pending
+  - Analysis failed
+
+- **BestPracticesPage.stories.tsx**
+
+  - Default with practices
+  - Loading state
+  - Empty state
+  - Error state
+
+- **ChatPage.stories.tsx**
+  - Default with messages
+  - Loading state
+  - Empty state
+  - Error state
+  - Message sending state
+
+### 2. Component Stories
+
+- **ErrorBoundary.stories.tsx**
+
+  - With error
+  - With content
+
+- **LoadingSpinner.stories.tsx**
+  - Small size
+  - Medium size
+  - Large size
+  - Without text
+  - Full height
+  - Not centered
+
+### 3. Testing
+
+- Unit tests for each component
+- Integration tests for page interactions
+- Accessibility tests for keyboard navigation and screen reader support
+
+## API Integration
+
+### 1. Type Definitions
 
 ```typescript
-<MantineProvider
-  theme={{ ...theme, colorScheme }}
-  withGlobalStyles
-  withNormalizeCSS
->
-  {/* App content */}
-</MantineProvider>
-```
+// Core types
+interface Repository {
+  id: string;
+  name: string;
+  // ...
+}
 
-### Navigation Configuration
+interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  // ...
+}
 
-The application uses a responsive navbar implemented with Mantine's AppShell:
-
-1. **AppShell Layout**
-
-```typescript
-<AppShell
-  padding="md"
-  navbar={<AppNavbar />}
-  styles={(theme) => ({
-    main: {
-      backgroundColor: theme.colorScheme === 'dark' ? theme.colors.dark[8] : theme.colors.gray[0],
-    },
-  })}
->
-  {/* Routes */}
-</AppShell>
-```
-
-2. **Navbar Component**
-
-- Located at: `frontend/src/components/layout/AppNavbar.tsx`
-- Implements responsive design for mobile and desktop
-- Handles navigation state and user interactions
-
-### CORS Configuration
-
-#### Backend (FastAPI)
-
-```python
-# backend/src/main.py
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Frontend dev server
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-```
-
-#### Frontend (Vite)
-
-```typescript
-// vite.config.ts
-export default defineConfig({
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8888',
-        changeOrigin: true,
-        rewrite: path => path.replace(/^\/api/, ''),
-      },
-    },
-  },
-});
-```
-
-#### Production Setup
-
-For production, CORS is handled through Nginx reverse proxy:
-
-```nginx
-# nginx.conf
-location /api/ {
-    proxy_pass http://backend:8888/;
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
+interface BestPractice {
+  id: string;
+  title: string;
+  // ...
 }
 ```
 
-### Theme Configuration
+### 2. API Client
 
-The application uses Mantine v7 for styling and theming. The theme configuration is located in `frontend/src/theme.ts`.
+Organized into namespaced clients:
 
-### Theme Structure
+- `repoApi`: Repository operations
+- `chatApi`: Chat functionality
+- `bestPracticesApi`: Best practices management
+
+### 3. React Query Hooks
+
+Custom hooks for data fetching:
 
 ```typescript
-theme
-├── colors                 # Custom color palettes
-│   └── brand             # Primary brand colors
-├── primaryColor          # Default primary color ('brand')
-├── primaryShade         # Default shade for light/dark modes
-├── fontFamily           # Default font family
-├── headings             # Heading styles configuration
-└── components           # Component-specific styles
-    ├── Button           # Button component styles
-    └── AppShell         # AppShell component styles
+// Repository hooks
+useRepositories();
+useRepository(id);
+useRepositoryAnalysis(id);
+
+// Chat hooks
+useChatHistory(repoId);
+useSendMessage();
+
+// Best practices hooks
+useGlobalBestPractices();
+useMakePracticeGeneralizable();
 ```
 
-### Color Scheme
+## Utility Hooks
 
-The brand color palette consists of 10 shades:
-- 0: #F0F8FF (Lightest)
-- 1: #C2E0FF
-- 2: #A5D8FF
-- 3: #7CC4FA
-- 4: #4FAEF7
-- 5: #2491F4 (Primary - Light Mode)
-- 6: #1283F0
-- 7: #0B6BD4 (Primary - Dark Mode)
-- 8: #0A5CAB
-- 9: #07468C (Darkest)
+1. **useMediaQuery**
 
-### Component Props
+   - Responsive design helper
+   - Predefined breakpoints
+   - Window resize handling
 
-When using Mantine components, follow these guidelines:
-
-1. Use `leftSection` instead of `leftIcon` for buttons:
-```typescript
-// Correct
-<Button leftSection={<IconSearch size={16} />}>
-  Search
-</Button>
-
-// Incorrect
-<Button leftIcon={<IconSearch size={16} />}>
-  Search
-</Button>
-```
-
-2. Use nested components for AppShell:
-```typescript
-// Correct
-<AppShell>
-  <AppShell.Header>
-    <MainHeader />
-  </AppShell.Header>
-  <AppShell.Navbar>
-    <MainNavbar />
-  </AppShell.Navbar>
-</AppShell>
-
-// Incorrect
-<AppShell
-  header={<MainHeader />}
-  navbar={<MainNavbar />}
->
-  {children}
-</AppShell>
-```
-
-3. Configure responsive breakpoints in AppShell:
-```typescript
-// Correct
-<AppShell
-  header={{ height: 60 }}
-  navbar={{ width: 300, breakpoint: 'sm' }}
->
-  ...
-</AppShell>
-
-// Incorrect
-<AppShell
-  navbarOffsetBreakpoint="sm"
-  asideOffsetBreakpoint="sm"
->
-  ...
-</AppShell>
-```
+2. **useLocalStorage**
+   - Persistent state management
+   - Type-safe storage
+   - Error handling
 
 ## Troubleshooting Guide
 
@@ -1078,11 +925,11 @@ Benefits:
 
 #### 2. Structured Logging
 
-```python
-# Instead of basic string logging:
+```typescript
+// Instead of basic string logging:
 logger.error(f"Failed to create repository: {str(e)}")
 
-# We use structured logging with context:
+// We use structured logging with context:
 logger.error(
     "repository_creation_failed",
     error=str(e),
@@ -1103,8 +950,8 @@ Benefits:
 
 #### 3. Input Validation
 
-```python
-# Instead of late validation:
+```typescript
+// Instead of late validation:
 async def create_repository(repo: RepositoryCreate):
     # Error discovered only during database operation
     return await repo_service.create_repository(repo)
@@ -1130,8 +977,8 @@ Benefits:
 
 #### 4. Async Database Operations
 
-```python
-# Instead of synchronous sessions:
+```typescript
+// Instead of synchronous sessions:
 def get_repository(repo_id: str, db: Session):
     return db.query(Repository).filter_by(id=repo_id).first()
 
@@ -1253,141 +1100,141 @@ Benefits:
 - [ ] Enhance error reporting dashboard
 - [ ] Add error correlation across services
 
-## Recent Updates
+## Accessibility Testing
 
-### Chat Feature Implementation (2025-02-03)
+RepoAnalyzer uses automated accessibility testing to ensure WCAG compliance:
 
-- Added new chat interface for interacting with repositories
-- Components:
-  - Frontend: `src/pages/ChatPage.tsx` - React component with real-time message display
-  - Backend: `src/api/routes/chat.py` - FastAPI endpoint for chat functionality
-  - Service: `src/services/chat.py` - Chat service for message processing
-- Features:
-  - Real-time message display
-  - Error handling and loading states
-  - Message timestamps
-  - Repository-specific chat context
-- TODO:
-  - Implement LLM integration in `ChatService._generate_response()`
-  - Add message persistence
-  - Add typing indicators
-  - Add message reactions
+### Setup
 
-### Component Integration
-
-Our UI components are designed to work seamlessly with the repository analysis features:
-
-1. **File Explorer**
-   ```typescript
-   import { ScrollArea, Button } from "@/components/common/ui";
-   
-   export function FileExplorer() {
-     return (
-       <ScrollArea className="h-screen">
-         <div className="p-4">
-           <Button variant="outline" onClick={handleRefresh}>
-             Refresh Files
-           </Button>
-           {/* File tree implementation */}
-         </div>
-       </ScrollArea>
-     );
-   }
-   ```
-
-2. **Analysis Results**
-   ```typescript
-   import { Card, Badge, Progress } from "@/components/common/ui";
-   
-   export function AnalysisResult({ pattern, confidence }) {
-     return (
-       <Card>
-         <Card.Header>
-           <h3>Pattern Detection</h3>
-           <Badge variant={confidence > 0.8 ? "success" : "warning"}>
-             {Math.round(confidence * 100)}% Confidence
-           </Badge>
-         </Card.Header>
-         <Card.Content>
-           <Progress value={confidence * 100} />
-         </Card.Content>
-       </Card>
-     );
-   }
-   ```
-
-3. **Repository Actions**
-   ```typescript
-   import { 
-     DropdownMenu,
-     DropdownMenuTrigger,
-     DropdownMenuContent,
-     DropdownMenuItem
-   } from "@/components/common/ui";
-   
-   export function RepoActions() {
-     return (
-       <DropdownMenu>
-         <DropdownMenuTrigger>Actions</DropdownMenuTrigger>
-         <DropdownMenuContent>
-           <DropdownMenuItem onClick={handleAnalyze}>
-             Analyze Repository
-           </DropdownMenuItem>
-           <DropdownMenuItem onClick={handleExport}>
-             Export Results
-           </DropdownMenuItem>
-         </DropdownMenuContent>
-       </DropdownMenu>
-     );
-   }
-   ```
-
-### Error Handling
-
-Our components include built-in error handling and feedback:
+1. Jest-axe Configuration:
 
 ```typescript
-import { Toast, ToastProvider } from "@/components/common/ui";
+// src/test/setupTests.ts
+import '@testing-library/jest-dom';
+import 'jest-axe/extend-expect';
+import { toHaveNoViolations } from 'jest-axe';
 
-export function ErrorToast({ error }) {
-  return (
-    <Toast variant="destructive">
-      <Toast.Title>Error</Toast.Title>
-      <Toast.Description>{error.message}</Toast.Description>
-    </Toast>
-  );
-}
+expect.extend(toHaveNoViolations);
 ```
 
-### Accessibility Features
+2. Axe Configuration:
 
-Our UI components follow WCAG guidelines:
+```typescript
+// src/test/a11y-test-config.ts
+export const axeConfig = {
+  rules: [
+    { id: 'color-contrast', enabled: true },
+    { id: 'html-has-lang', enabled: true },
+    { id: 'landmark-one-main', enabled: true },
+    { id: 'page-has-heading-one', enabled: true },
+    { id: 'region', enabled: true },
+    { id: 'aria-required-children', enabled: true },
+    { id: 'aria-required-parent', enabled: true },
+    { id: 'button-name', enabled: true },
+    { id: 'link-name', enabled: true },
+    { id: 'label', enabled: true },
+  ],
+};
+```
 
-1. **Keyboard Navigation**
-   - All interactive elements are focusable
-   - Logical tab order
-   - Clear focus indicators
+### Writing Accessibility Tests
 
-2. **Screen Readers**
-   - ARIA labels and roles
-   - Meaningful descriptions
+Each component should include accessibility tests:
+
+1. Basic Violations Check:
+
+```typescript
+it('should have no accessibility violations', async () => {
+  const { container } = render(<MyComponent />);
+  const results = await axe(container, axeConfig);
+  expect(results).toHaveNoViolations();
+});
+```
+
+2. ARIA Attributes:
+
+```typescript
+it('should have proper ARIA attributes', () => {
+  render(<MyComponent />);
+  expect(screen.getByRole('button')).toHaveAttribute('aria-label');
+  expect(screen.getByRole('region')).toHaveAttribute('aria-live');
+});
+```
+
+3. Keyboard Navigation:
+
+```typescript
+it('should handle keyboard navigation', () => {
+  render(<MyComponent />);
+  fireEvent.tab();
+  expect(screen.getByRole('button')).toHaveFocus();
+});
+```
+
+4. Focus Management:
+
+```typescript
+it('should trap focus in modals', () => {
+  render(<Modal isOpen={true} />);
+  const focusableElements = screen.getAllByRole('button');
+  fireEvent.tab();
+  expect(focusableElements[0]).toHaveFocus();
+});
+```
+
+### Running Tests
+
+Run accessibility tests with:
+
+```bash
+# Run all tests
+npm test
+
+# Watch mode
+npm test -- --watch
+
+# Coverage report
+npm test -- --coverage
+```
+
+### Common Patterns
+
+1. Focus Management:
+
+   - Trap focus in modals
+   - Return focus after actions
+   - Skip links for navigation
+
+2. ARIA Live Regions:
+
+   - Use 'polite' for status updates
+   - Use 'assertive' for errors
+   - Announce loading states
+
+3. Keyboard Interactions:
+
+   - Enter/Space for buttons
+   - Arrow keys for navigation
+   - Escape for closing modals
+
+4. Screen Reader Support:
+   - Descriptive labels
    - Status announcements
-
-3. **Color Contrast**
-   - WCAG 2.1 AA compliant
-   - Dark mode support
-   - High contrast mode
+   - Error messages
+   - Loading states
 
 ### Performance Optimization
 
 1. **Code Splitting**
+
    ```typescript
    // pages/RepoAnalysis.tsx
-   const CodeViewer = React.lazy(() => import("@/components/CodeViewer"));
-   const PatternView = React.lazy(() => import("@/components/PatternView"));
+   const CodeViewer = React.lazy(() => import('@/components/CodeViewer'));
+   const PatternView = React.lazy(() => import('@/components/PatternView'));
    ```
 
 2. **Efficient Rendering**
+
    ```typescript
    // Memoized components
    const MemoizedFileTree = React.memo(FileTree);
@@ -1395,9 +1242,10 @@ Our UI components follow WCAG guidelines:
    ```
 
 3. **Virtual Lists**
+
    ```typescript
    import { ScrollArea } from "@/components/common/ui";
-   
+
    function FileList({ files }) {
      return (
        <ScrollArea className="h-[400px]">
@@ -1412,10 +1260,12 @@ Our UI components follow WCAG guidelines:
 ### Testing Strategy
 
 1. **Component Tests**
+
    ```typescript
    import { render, screen } from "@testing-library/react";
+   import { describe, it, expect } from 'vitest';
    import { Button } from "@/components/common/ui";
-   
+
    describe("Button", () => {
      it("renders with correct variant", () => {
        render(<Button variant="destructive">Delete</Button>);
@@ -1425,44 +1275,163 @@ Our UI components follow WCAG guidelines:
    ```
 
 2. **Integration Tests**
+
    ```typescript
-   import { render, screen, fireEvent } from "@testing-library/react";
+   import { render, screen } from "@testing-library/react";
+   import { describe, it, expect, beforeEach } from 'vitest';
+   import userEvent from '@testing-library/user-event';
    import { RepoAnalysis } from "@/pages/RepoAnalysis";
-   
+
    describe("RepoAnalysis", () => {
      it("shows analysis results", async () => {
        render(<RepoAnalysis />);
-       fireEvent.click(screen.getByText("Analyze"));
+       await userEvent.click(screen.getByText("Analyze"));
        expect(await screen.findByText("Results")).toBeInTheDocument();
      });
    });
    ```
 
-### Development Guidelines
+3. **Accessibility Tests**
 
-1. **Component Creation**
-   - Place in appropriate directory under `ui/`
-   - Export through barrel file
-   - Include TypeScript types
-   - Add to documentation
+   ```typescript
+   import { render, screen } from "@testing-library/react";
+   import { describe, it, expect } from 'vitest';
+   import { axe } from 'jest-axe';
+   import { Button } from "@/components/common/ui";
 
-2. **Styling**
-   - Use Tailwind CSS classes
-   - Follow design token system
-   - Support dark mode
-   - Maintain responsive design
+   describe("Button", () => {
+     it("has no accessibility violations", async () => {
+       const { container } = render(<Button />);
+       const results = await axe(container, axeConfig);
+       expect(results).toHaveNoViolations();
+     });
+   });
+   ```
 
-3. **State Management**
-   - Use React hooks effectively
-   - Implement proper error boundaries
-   - Handle loading states
-   - Manage side effects
+### CI/CD Pipeline
 
-### Layout Components
+```mermaid
+graph TD
+    PR[Pull Request] --> Build[Build Frontend]
+    Build --> Tests[Run Tests]
+    Tests --> Coverage[Generate Coverage]
+    Tests --> Visual[Visual Testing]
+    Tests --> A11y[Accessibility Checks]
+    Visual --> Report[Generate Report]
+    A11y --> Report
+    Coverage --> Report
+    Report --> Comment[PR Comment]
+```
+
+### Running Tests Locally
+
+1. **All Tests**
+
+```bash
+# Run all tests
+npm test
+
+# Watch mode
+npm test -- --watch
+
+# Coverage report
+npm test -- --coverage
+```
+
+2. **Accessibility Tests**
+
+```bash
+# Run a11y tests
+npm run test:a11y
+
+# Run pa11y
+npm run test:pa11y
+
+# Run with screen reader checks
+npm run test:a11y:manual
+```
+
+3. **Performance Tests**
+
+```bash
+# Run Lighthouse
+npm run test:lighthouse
+
+# Check bundle size
+npm run analyze
+
+# Run runtime tests
+npm run test:perf
+```
+
+4. **Visual Tests**
+
+```bash
+# Run Chromatic
+npm run chromatic
+
+# Run BackstopJS
+npm run test:visual
+
+# Update visual references
+npm run test:visual:approve
+```
+
+### Test Reports
+
+1. **Coverage Reports**
+
+   - Located in `coverage/`
+   - HTML report in `coverage/lcov-report/`
+   - JSON summary in `coverage/coverage-summary.json`
+
+2. **Performance Reports**
+
+   - Lighthouse reports in `.lighthouseci/`
+   - Bundle analysis in `bundle-analysis.json`
+   - Runtime performance in `performance-results/`
+
+3. **Visual Reports**
+   - Chromatic results in `chromatic-results/`
+   - BackstopJS reports in `backstop_data/`
+   - Percy results in `.percy/`
+
+### Test Organization
+
+1. Unit Tests:
+
+   - Located next to components in **tests** directory
+   - Follow ComponentName.test.tsx naming convention
+   - Group tests by feature using describe blocks
+   - Comprehensive coverage including:
+     - Rendering
+     - Accessibility
+     - Keyboard Interaction
+     - Mouse Interaction
+     - States
+     - Value Management
+     - Event Handling
+
+2. Visual Tests:
+
+   - Stories in \*.stories.tsx
+   - Organized by component
+   - Include variants and states
+   - Document accessibility features
+
+3. A11y Tests:
+   - Integrated with unit tests using vitest-axe
+   - Test ARIA attributes and roles
+   - Keyboard navigation testing
+   - Screen reader announcements
+   - Focus management
+
+## Layout Components
 
 The application uses a modular layout system built with three main components:
 
 #### 1. AppShell Component
+
 ```typescript
 interface AppShellProps {
   children: React.ReactNode;
@@ -1470,6 +1439,7 @@ interface AppShellProps {
   sidebar?: React.ReactNode;
 }
 ```
+
 - **Purpose**: Main layout container that manages the application's structure
 - **Features**:
   - Flexible header and sidebar slots
@@ -1477,19 +1447,19 @@ interface AppShellProps {
   - Proper content scrolling
   - Consistent padding and spacing
 - **Usage**:
+
 ```tsx
-<AppShell
-  header={<Header />}
-  sidebar={<Sidebar />}
->
+<AppShell header={<Header />} sidebar={<Sidebar />}>
   <PageContent />
 </AppShell>
 ```
 
 #### 2. Header Component
+
 ```typescript
 interface HeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
 ```
+
 - **Purpose**: Main navigation header with branding and controls
 - **Features**:
   - Repository branding
@@ -1503,11 +1473,13 @@ interface HeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
   - React Router for navigation
 
 #### 3. Sidebar Component
+
 ```typescript
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   className?: string;
 }
 ```
+
 - **Purpose**: Navigation sidebar with repository analysis sections
 - **Features**:
   - Section-based navigation
@@ -1523,7 +1495,9 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   - Analysis Tools
 
 #### Testing
+
 All layout components include comprehensive tests:
+
 - Unit tests for rendering
 - Integration tests for navigation
 - Accessibility tests
@@ -1531,6 +1505,7 @@ All layout components include comprehensive tests:
 - Mobile responsiveness tests
 
 #### Usage Guidelines
+
 1. **AppShell**: Always wrap your main application with AppShell
 2. **Header**: Use at the top level, avoid nested headers
 3. **Sidebar**: Can be used at multiple levels, but prefer single instance
@@ -1540,11 +1515,1090 @@ All layout components include comprehensive tests:
    - Desktop: > 992px
 
 #### Component Organization
+
 ```
-frontend/src/components/layout/
-├── AppShell.tsx       # Main layout container
-├── Header.tsx         # Top navigation bar
-├── Sidebar.tsx        # Navigation sidebar
-├── ErrorBoundary.tsx  # Error handling
-├── __tests__/        # Component tests
-└── index.ts          # Barrel exports
+frontend/src/
+├── components/
+│   ├── common/
+│   │   ├── ui/              # Shared UI components
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   └── ...
+│   │   └── FileTree/        # File system navigation
+│   │       └── index.tsx
+│   └── repository/          # Repository-specific components
+│       └── analysis/
+│           ├── FileExplorerTab.tsx
+│           ├── CodeMetricsPanel.tsx
+│           └── DependencyGraph.tsx
+├── utils/
+│   └── classnames.ts        # Tailwind class management
+└── styles/
+    └── index.css           # Global styles and Tailwind config
+```
+
+### Component Dependencies
+
+```mermaid
+graph TD
+    A[Repository Analysis] --> B[FileExplorerTab]
+    A --> C[CodeMetricsPanel]
+    A --> D[DependencyGraph]
+    B --> E[FileTree]
+    B --> F[UI Components]
+    C --> G[Chart.js]
+    C --> F
+    D --> G
+    D --> F
+    F --> H[Radix UI]
+    F --> I[Tailwind CSS]
+```
+
+### UI Component Usage
+
+Each component follows these principles:
+
+1. **Accessibility**: Built on Radix UI primitives with proper ARIA attributes
+2. **Type Safety**: Full TypeScript support with proper interfaces
+3. **Styling**: Uses Tailwind CSS with consistent design tokens
+4. **Testing**: Includes data-testid attributes for E2E testing
+
+Example usage of new components:
+
+```tsx
+import { Card, Tabs, Button } from '@/components/common/ui';
+
+function RepositoryView() {
+  return (
+    <Card>
+      <Tabs defaultValue="files">
+        <TabsList>
+          <TabsTrigger value="files">Files</TabsTrigger>
+          <TabsTrigger value="analysis">Analysis</TabsTrigger>
+        </TabsList>
+        <TabsContent value="files">
+          <FileExplorerTab />
+        </TabsContent>
+        <TabsContent value="analysis">
+          <CodeMetricsPanel />
+          <DependencyGraph />
+        </TabsContent>
+      </Tabs>
+    </Card>
+  );
+}
+```
+
+## Database Schema
+
+The application uses SQLite with SQLAlchemy for data persistence. Here's the schema organization:
+
+```mermaid
+erDiagram
+    Repository ||--o{ File : contains
+    Repository ||--o{ AnalysisRun : has
+    Repository ||--o{ ChatMessage : has
+    File ||--o{ FileMetric : has
+
+    Repository {
+        string id PK
+        string url UK
+        string name
+        string description
+        string owner
+        string branch
+        boolean is_valid
+        string local_path
+        enum analysis_status
+        float analysis_progress
+        json analysis_result
+        string job_id
+        string last_error
+        datetime created_at
+        datetime updated_at
+        datetime last_analyzed_at
+    }
+
+    File {
+        string id PK
+        string repository_id FK
+        string path
+        string content
+        json embedding
+        datetime created_at
+        datetime updated_at
+    }
+
+    FileMetric {
+        string id PK
+        string file_id FK
+        string category
+        string name
+        json value
+        datetime created_at
+    }
+
+    AnalysisRun {
+        string id PK
+        string repository_id FK
+        enum status
+        datetime started_at
+        datetime completed_at
+        string error
+        json result
+        string version
+    }
+
+    ChatMessage {
+        string id PK
+        string repository_id FK
+        string role
+        text content
+        json message_metadata
+        datetime created_at
+    }
+
+    BestPractice {
+        string id PK
+        string title
+        text description
+        string category
+        string language
+        string severity
+        string impact
+        json references
+        datetime created_at
+        datetime updated_at
+    }
+```
+
+### Database Organization Rules
+
+1. Model Structure
+
+   - All models defined in `backend/src/models/base.py`
+   - Base class in `backend/src/infrastructure/base.py`
+   - SQLAlchemy 2.0 style with type hints
+   - Proper foreign key constraints
+
+2. Database Operations
+
+   - Use SQLAlchemy async session management
+   - Implement proper transaction boundaries
+   - Handle database errors gracefully
+   - Log all database operations
+
+3. Schema Management
+
+   - Use Alembic for migrations
+   - Keep migration scripts in `backend/alembic/versions/`
+   - Document schema changes in migrations
+   - Test migrations before deployment
+
+4. Data Access Patterns
+   - Use repository pattern for data access
+   - Implement proper caching strategies
+   - Handle N+1 query problems
+   - Use appropriate indexes
+
+## Settings Migration Guide
+
+The application uses a versioned settings system to ensure smooth upgrades and backward compatibility. Here's what you need to know:
+
+### Version History
+
+#### Version 3 (Current)
+
+- Added accessibility settings for improved usability
+  - High contrast mode
+  - Motion reduction
+  - Font scaling
+- Added collaboration features
+  - Analysis sharing
+  - Team visibility controls
+  - Comment system
+- Added AI-powered features
+  - Smart suggestions
+  - Confidence thresholds
+  - Token limits
+
+#### Version 2
+
+- Added security settings
+  - Code vulnerability scanning
+  - Dependency auditing
+  - Severity thresholds
+- Added editor preferences
+  - Format on save
+  - Format on paste
+  - Line rulers
+- Enhanced analysis settings
+  - Type inference
+  - Test analysis
+  - Dependency analysis
+
+#### Version 1
+
+- Initial structured settings
+  - Theme configuration
+  - Analysis preferences
+  - Display options
+  - Notification controls
+  - Performance tuning
+
+#### Version 0
+
+- Legacy unstructured settings
+  - Basic theme (dark/light)
+  - Simple analysis options
+  - File size limits
+
+### Backup and Restore
+
+The application automatically creates backups before significant changes:
+
+1. Before settings migrations
+2. Before importing new settings
+3. Before bulk setting changes
+
+To manually manage backups:
+
+1. Open Settings → Backup & Restore
+2. View available backups with timestamps and descriptions
+3. Export backups to files for safekeeping
+4. Import backups from files
+5. Restore settings from any backup point
+
+### Troubleshooting
+
+If you encounter issues after a settings change:
+
+1. Check the console for detailed error messages
+2. Look for validation errors in the settings UI
+3. Try restoring from a recent backup
+4. Clear all settings and reconfigure if needed
+
+For developers:
+
+- Settings migrations are defined in `utils/settings-migration.ts`
+- Validation rules are in `utils/settings-validation.ts`
+- Error templates are in `utils/settings-errors.ts`
+- Backup functionality is in `utils/settings-backup.ts`
+
+## Development Setup
+
+### Server Startup
+
+There are two ways to start the backend server:
+
+1. Using `start_server.py` (Recommended):
+
+   ```bash
+   cd backend
+   python start_server.py
+   ```
+
+   This method includes:
+
+   - Automatic port management
+   - Pre-configured CORS settings for development
+   - Process cleanup for occupied ports
+   - Health check endpoint
+
+2. Using uvicorn directly:
+   ```bash
+   cd backend
+   python -m uvicorn src.api.main:app --reload
+   ```
+   Note: This method requires manual CORS configuration through environment variables.
+
+### CORS Configuration
+
+CORS is configured in two places:
+
+1. `backend/start_server.py` (Primary):
+
+   - Pre-configured for development ports:
+     - http://localhost:5173 (Vite dev server)
+     - http://localhost:5174 (Additional Vite dev port)
+     - http://localhost:3000 (Alternative dev port)
+     - http://localhost:4173 (Vite preview)
+   - No additional configuration needed when using `start_server.py`
+
+2. Environment Variables (Optional):
+   - Used when running with uvicorn directly
+   - Configure in `.env` file:
+     ```bash
+     CORS_ORIGINS=http://localhost:5173,http://localhost:5174
+     ```
+
+**Important:** Always use `start_server.py` for development to ensure proper CORS configuration.
+
+## Keyboard Navigation
+
+RepoAnalyzer is fully keyboard accessible. Here are the available keyboard shortcuts and navigation patterns:
+
+### Global Navigation
+
+- `Tab`: Move focus to next interactive element
+- `Shift + Tab`: Move focus to previous interactive element
+- `Escape`: Close any open modal, tooltip, or expanded panel
+- `Enter` or `Space`: Activate focused button or link
+
+### Repository List
+
+- `↑/↓`: Navigate through repository list
+- `Enter`: Open selected repository
+- `Ctrl + Enter`: Open repository in new tab
+- `/`: Focus search input
+- `Ctrl + A`: Select all text in search input
+- `Escape`: Clear search input
+
+### Pattern View
+
+- `↑/↓`: Navigate through pattern list
+- `Enter`: Expand/collapse pattern details
+- `Tab` to code button + `Enter`: View pattern code
+- `Tab` to file count + `Enter`: View implementation files
+- `Escape`: Close code view or file list
+
+### Code Quality View
+
+- `←/→`: Navigate between metric categories
+- `Enter`: Select metric category
+- `Tab` to warning + `Enter`: View warnings
+- `Tab` to filters + `Enter`: Open filter panel
+- `Space`: Toggle filter checkboxes
+- `Escape`: Close filter panel
+
+### Metrics Card
+
+- `Tab` to expand + `Enter`: Show metric details
+- `↑/↓`: Navigate through metrics
+- `Enter`: View metric details
+- `Tab` to trend + `Enter`: Show trend tooltip
+- `Escape`: Close metric details or tooltip
+
+### Accessibility Features
+
+- All interactive elements are keyboard focusable
+- ARIA live regions announce dynamic content updates
+- Screen reader announcements for:
+  - Loading states
+  - Error messages
+  - Pattern confidence levels
+  - Metric scores and trends
+- Focus is managed for modals and expandable sections
+- Skip links for main content navigation
+- High contrast mode support
+
+## Testing Infrastructure
+
+### Visual Testing and CI/CD
+
+RepoAnalyzer uses GitHub Actions to automate visual testing and accessibility checks:
+
+```mermaid
+graph TD
+    PR[Pull Request] --> Build[Build Frontend]
+    Build --> Tests[Run Tests]
+    Tests --> Coverage[Generate Coverage]
+    Tests --> Visual[Visual Testing]
+    Tests --> A11y[Accessibility Checks]
+    Visual --> Report[Generate Report]
+    A11y --> Report
+    Coverage --> Report
+    Report --> Comment[PR Comment]
+```
+
+### GitHub Actions Configuration
+
+1. Visual Testing Workflow:
+
+```yaml
+name: Visual Testing
+on:
+  push:
+    branches: [main]
+    paths: ['frontend/**']
+  pull_request:
+    branches: [main]
+```
+
+2. Key Features:
+
+   - Automated Storybook testing
+   - Visual regression checks
+   - Accessibility validation
+   - Coverage reporting
+
+3. Test Coverage:
+
+   - Unit tests: Vitest + Testing Library
+   - Visual tests: Storybook + Chromatic
+   - A11y tests: vitest-axe + Storybook a11y
+
+4. CI/CD Pipeline:
+   - Build validation
+   - Test execution
+   - Coverage analysis
+   - Visual regression
+   - Accessibility checks
+   - PR status updates
+
+### Running Tests Locally
+
+1. **All Tests**
+
+```bash
+# Run all tests
+npm test
+
+# Watch mode
+npm test -- --watch
+
+# Coverage report
+npm test -- --coverage
+```
+
+2. **Accessibility Tests**
+
+```bash
+# Run a11y tests
+npm run test:a11y
+
+# Run pa11y
+npm run test:pa11y
+
+# Run with screen reader checks
+npm run test:a11y:manual
+```
+
+3. **Performance Tests**
+
+```bash
+# Run Lighthouse
+npm run test:lighthouse
+
+# Check bundle size
+npm run analyze
+
+# Run runtime tests
+npm run test:perf
+```
+
+4. **Visual Tests**
+
+```bash
+# Run Chromatic
+npm run chromatic
+
+# Run BackstopJS
+npm run test:visual
+
+# Update visual references
+npm run test:visual:approve
+```
+
+### Test Reports
+
+1. **Coverage Reports**
+
+   - Located in `coverage/`
+   - HTML report in `coverage/lcov-report/`
+   - JSON summary in `coverage/coverage-summary.json`
+
+2. **Performance Reports**
+
+   - Lighthouse reports in `.lighthouseci/`
+   - Bundle analysis in `bundle-analysis.json`
+   - Runtime performance in `performance-results/`
+
+3. **Visual Reports**
+   - Chromatic results in `chromatic-results/`
+   - BackstopJS reports in `backstop_data/`
+   - Percy results in `.percy/`
+
+### Test Organization
+
+1. Unit Tests:
+
+   - Located next to components in **tests** directory
+   - Follow ComponentName.test.tsx naming convention
+   - Group tests by feature using describe blocks
+   - Comprehensive coverage including:
+     - Rendering
+     - Accessibility
+     - Keyboard Interaction
+     - Mouse Interaction
+     - States
+     - Value Management
+     - Event Handling
+
+2. Visual Tests:
+
+   - Stories in \*.stories.tsx
+   - Organized by component
+   - Include variants and states
+   - Document accessibility features
+
+3. A11y Tests:
+   - Integrated with unit tests using vitest-axe
+   - Test ARIA attributes and roles
+   - Keyboard navigation testing
+   - Screen reader announcements
+   - Focus management
+
+## Layout Components
+
+The application uses a modular layout system built with three main components:
+
+#### 1. AppShell Component
+
+```typescript
+interface AppShellProps {
+  children: React.ReactNode;
+  header?: React.ReactNode;
+  sidebar?: React.ReactNode;
+}
+```
+
+- **Purpose**: Main layout container that manages the application's structure
+- **Features**:
+  - Flexible header and sidebar slots
+  - Responsive design with mobile support
+  - Proper content scrolling
+  - Consistent padding and spacing
+- **Usage**:
+
+```tsx
+<AppShell header={<Header />} sidebar={<Sidebar />}>
+  <PageContent />
+</AppShell>
+```
+
+#### 2. Header Component
+
+```typescript
+interface HeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
+```
+
+- **Purpose**: Main navigation header with branding and controls
+- **Features**:
+  - Repository branding
+  - Main navigation links
+  - Theme toggle (dark/light mode)
+  - Responsive mobile design
+  - Accessible navigation
+- **Dependencies**:
+  - useTheme hook for theme management
+  - Radix UI icons
+  - React Router for navigation
+
+#### 3. Sidebar Component
+
+```typescript
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
+  className?: string;
+}
+```
+
+- **Purpose**: Navigation sidebar with repository analysis sections
+- **Features**:
+  - Section-based navigation
+  - Active route highlighting
+  - Icon-based navigation items
+  - Collapsible on mobile
+  - Customizable via className prop
+- **Sections**:
+  - Files and Structure
+  - Branches
+  - Code Patterns
+  - Documentation
+  - Analysis Tools
+
+#### Testing
+
+All layout components include comprehensive tests:
+
+- Unit tests for rendering
+- Integration tests for navigation
+- Accessibility tests
+- Theme switching tests
+- Mobile responsiveness tests
+
+#### Usage Guidelines
+
+1. **AppShell**: Always wrap your main application with AppShell
+2. **Header**: Use at the top level, avoid nested headers
+3. **Sidebar**: Can be used at multiple levels, but prefer single instance
+4. **Responsive Design**:
+   - Mobile: < 768px (collapsed sidebar)
+   - Tablet: 768px - 992px
+   - Desktop: > 992px
+
+#### Component Organization
+
+```
+frontend/src/
+├── components/
+│   ├── common/
+│   │   ├── ui/              # Shared UI components
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   └── ...
+│   │   └── FileTree/        # File system navigation
+│   │       └── index.tsx
+│   └── repository/          # Repository-specific components
+│       └── analysis/
+│           ├── FileExplorerTab.tsx
+│           ├── CodeMetricsPanel.tsx
+│           └── DependencyGraph.tsx
+├── utils/
+│   └── classnames.ts        # Tailwind class management
+└── styles/
+    └── index.css           # Global styles and Tailwind config
+```
+
+### Component Dependencies
+
+```mermaid
+graph TD
+    A[Repository Analysis] --> B[FileExplorerTab]
+    A --> C[CodeMetricsPanel]
+    A --> D[DependencyGraph]
+    B --> E[FileTree]
+    B --> F[UI Components]
+    C --> G[Chart.js]
+    C --> F
+    D --> G
+    D --> F
+    F --> H[Radix UI]
+    F --> I[Tailwind CSS]
+```
+
+### UI Component Usage
+
+Each component follows these principles:
+
+1. **Accessibility**: Built on Radix UI primitives with proper ARIA attributes
+2. **Type Safety**: Full TypeScript support with proper interfaces
+3. **Styling**: Uses Tailwind CSS with consistent design tokens
+4. **Testing**: Includes data-testid attributes for E2E testing
+
+Example usage of new components:
+
+```tsx
+import { Card, Tabs, Button } from '@/components/common/ui';
+
+function RepositoryView() {
+  return (
+    <Card>
+      <Tabs defaultValue="files">
+        <TabsList>
+          <TabsTrigger value="files">Files</TabsTrigger>
+          <TabsTrigger value="analysis">Analysis</TabsTrigger>
+        </TabsList>
+        <TabsContent value="files">
+          <FileExplorerTab />
+        </TabsContent>
+        <TabsContent value="analysis">
+          <CodeMetricsPanel />
+          <DependencyGraph />
+        </TabsContent>
+      </Tabs>
+    </Card>
+  );
+}
+```
+
+## Database Schema
+
+The application uses SQLite with SQLAlchemy for data persistence. Here's the schema organization:
+
+```mermaid
+erDiagram
+    Repository ||--o{ File : contains
+    Repository ||--o{ AnalysisRun : has
+    Repository ||--o{ ChatMessage : has
+    File ||--o{ FileMetric : has
+
+    Repository {
+        string id PK
+        string url UK
+        string name
+        string description
+        string owner
+        string branch
+        boolean is_valid
+        string local_path
+        enum analysis_status
+        float analysis_progress
+        json analysis_result
+        string job_id
+        string last_error
+        datetime created_at
+        datetime updated_at
+        datetime last_analyzed_at
+    }
+
+    File {
+        string id PK
+        string repository_id FK
+        string path
+        string content
+        json embedding
+        datetime created_at
+        datetime updated_at
+    }
+
+    FileMetric {
+        string id PK
+        string file_id FK
+        string category
+        string name
+        json value
+        datetime created_at
+    }
+
+    AnalysisRun {
+        string id PK
+        string repository_id FK
+        enum status
+        datetime started_at
+        datetime completed_at
+        string error
+        json result
+        string version
+    }
+
+    ChatMessage {
+        string id PK
+        string repository_id FK
+        string role
+        text content
+        json message_metadata
+        datetime created_at
+    }
+
+    BestPractice {
+        string id PK
+        string title
+        text description
+        string category
+        string language
+        string severity
+        string impact
+        json references
+        datetime created_at
+        datetime updated_at
+    }
+```
+
+### Database Organization Rules
+
+1. Model Structure
+
+   - All models defined in `backend/src/models/base.py`
+   - Base class in `backend/src/infrastructure/base.py`
+   - SQLAlchemy 2.0 style with type hints
+   - Proper foreign key constraints
+
+2. Database Operations
+
+   - Use SQLAlchemy async session management
+   - Implement proper transaction boundaries
+   - Handle database errors gracefully
+   - Log all database operations
+
+3. Schema Management
+
+   - Use Alembic for migrations
+   - Keep migration scripts in `backend/alembic/versions/`
+   - Document schema changes in migrations
+   - Test migrations before deployment
+
+4. Data Access Patterns
+   - Use repository pattern for data access
+   - Implement proper caching strategies
+   - Handle N+1 query problems
+   - Use appropriate indexes
+
+## Settings Migration Guide
+
+The application uses a versioned settings system to ensure smooth upgrades and backward compatibility. Here's what you need to know:
+
+### Version History
+
+#### Version 3 (Current)
+
+- Added accessibility settings for improved usability
+  - High contrast mode
+  - Motion reduction
+  - Font scaling
+- Added collaboration features
+  - Analysis sharing
+  - Team visibility controls
+  - Comment system
+- Added AI-powered features
+  - Smart suggestions
+  - Confidence thresholds
+  - Token limits
+
+#### Version 2
+
+- Added security settings
+  - Code vulnerability scanning
+  - Dependency auditing
+  - Severity thresholds
+- Added editor preferences
+  - Format on save
+  - Format on paste
+  - Line rulers
+- Enhanced analysis settings
+  - Type inference
+  - Test analysis
+  - Dependency analysis
+
+#### Version 1
+
+- Initial structured settings
+  - Theme configuration
+  - Analysis preferences
+  - Display options
+  - Notification controls
+  - Performance tuning
+
+#### Version 0
+
+- Legacy unstructured settings
+  - Basic theme (dark/light)
+  - Simple analysis options
+  - File size limits
+
+### Backup and Restore
+
+The application automatically creates backups before significant changes:
+
+1. Before settings migrations
+2. Before importing new settings
+3. Before bulk setting changes
+
+To manually manage backups:
+
+1. Open Settings → Backup & Restore
+2. View available backups with timestamps and descriptions
+3. Export backups to files for safekeeping
+4. Import backups from files
+5. Restore settings from any backup point
+
+### Troubleshooting
+
+If you encounter issues after a settings change:
+
+1. Check the console for detailed error messages
+2. Look for validation errors in the settings UI
+3. Try restoring from a recent backup
+4. Clear all settings and reconfigure if needed
+
+For developers:
+
+- Settings migrations are defined in `utils/settings-migration.ts`
+- Validation rules are in `utils/settings-validation.ts`
+- Error templates are in `utils/settings-errors.ts`
+- Backup functionality is in `utils/settings-backup.ts`
+
+## Testing Guide
+
+### Test Structure
+
+```
+backend/tests/
+├── conftest.py          # Shared test fixtures
+├── services/
+│   ├── storage/
+│   │   └── test_vector_store.py  # Vector store tests
+│   └── test_analyzer.py          # Code analysis tests
+└── api/
+    └── test_routes.py            # API endpoint tests
+```
+
+### Test Categories
+
+1. **Unit Tests**
+
+   - Component isolation
+   - Mock external dependencies
+   - Fast execution
+
+2. **Integration Tests**
+
+   - Database operations
+   - Vector store operations
+   - API endpoints
+
+3. **End-to-End Tests**
+   - Complete workflows
+   - Real external services
+   - Performance metrics
+
+### Running Tests
+
+1. **Basic Test Run**
+
+   ```bash
+   python -m pytest
+   ```
+
+2. **Verbose Output**
+
+   ```bash
+   python -m pytest -v
+   ```
+
+3. **Test Specific File**
+
+   ```bash
+   python -m pytest backend/tests/services/storage/test_vector_store.py
+   ```
+
+4. **Run with Coverage**
+   ```bash
+   python -m pytest --cov=src --cov-report=term-missing
+   ```
+
+### Test Configuration
+
+1. **Environment Variables**
+
+   ```bash
+   # Required for tests
+   export TESTING=TRUE
+   export ALLOW_RESET=TRUE
+   export TEST_DIR=/path/to/test/data
+   ```
+
+2. **Test Database**
+
+   ```bash
+   # Uses in-memory SQLite
+   database_url = "sqlite+aiosqlite:///:memory:"
+   ```
+
+3. **ChromaDB Settings**
+   ```python
+   # Test settings
+   chromadb_path = Path(TEST_DIR) / "chromadb"
+   allow_reset = True
+   ```
+
+### Writing Tests
+
+1. **Test Fixtures**
+
+   ```python
+   @pytest.fixture
+   async def vector_store():
+       store = VectorStore()
+       yield store
+       await store.cleanup()
+   ```
+
+2. **Async Tests**
+
+   ```python
+   @pytest.mark.asyncio
+   async def test_add_code_chunk(vector_store):
+       await vector_store.add_code_chunk(...)
+   ```
+
+3. **Test Isolation**
+   ```python
+   def test_duplicate_chunk_id(vector_store):
+       # Each test gets a clean store
+       vector_store.add_code_chunk(...)
+   ```
+
+## Configuration Guide
+
+### Environment Variables
+
+1. **Required Variables**
+
+   ```bash
+   OPENAI_API_KEY=sk-...      # OpenAI API key
+   GITHUB_TOKEN=ghp_...       # GitHub personal access token
+   ```
+
+2. **Optional Variables**
+
+   ```bash
+   DEBUG=True                 # Enable debug mode
+   LOG_LEVEL=DEBUG           # Set logging level
+   ALLOW_RESET=TRUE          # Enable ChromaDB reset
+   ```
+
+3. **Test Variables**
+   ```bash
+   TESTING=TRUE              # Enable test mode
+   TEST_DIR=/path/to/tests   # Test data directory
+   ```
+
+### Directory Structure
+
+```
+backend/
+├── data/                    # Data storage
+│   ├── chromadb/           # ChromaDB files
+│   ├── logs/               # Application logs
+│   ├── repos/              # Cloned repositories
+│   └── outputs/            # Analysis outputs
+└── src/
+    └── core/
+        └── config.py       # Configuration handling
+```
+
+### Configuration Files
+
+1. **.env**
+
+   ```bash
+   # API Keys
+   OPENAI_API_KEY=sk-...
+   GITHUB_TOKEN=ghp_...
+
+   # Paths
+   CHROMADB_PATH=/path/to/chromadb
+   LOG_DIR=/path/to/logs
+
+   # Features
+   ALLOW_RESET=TRUE
+   DEBUG=TRUE
+   ```
+
+2. **pyproject.toml**
+   ```toml
+   [tool.pytest.ini_options]
+   asyncio_mode = "strict"
+   testpaths = ["backend/tests"]
+   ```
+
+### Logging Configuration
+
+1. **Log Levels**
+
+   ```python
+   log_level = "DEBUG" if debug else "INFO"
+   ```
+
+2. **Log Format**
+
+   ```python
+   log_format = "json"  # or "text"
+   ```
+
+3. **Log Locations**
+   ```python
+   log_dir = Path("data/logs")
+   log_file = log_dir / "app.log"
+   ```
