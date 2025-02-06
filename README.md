@@ -8,6 +8,12 @@ Current Version: 0.1.0
 
 ### Latest Changes (2025-02-06)
 
+- Fixed Frontend Issues:
+  - Resolved duplicate Router components for proper React Router setup
+  - Added ToastProvider for notification system
+  - Updated environment variable handling with Vite
+  - Improved component exports consistency
+  - Enhanced error handling with ErrorBoundary
 - Enhanced API Integration Tests:
   - Added comprehensive schema validation tests
   - Improved async operation handling with proper 202 status codes
@@ -48,6 +54,52 @@ The API provides the following endpoints:
     - 404 Not Found if task doesn't exist
     - Response format: `{ "task_id": string, "status": string, "progress": number, "results"?: object, "error"?: string }`
 
+### Environment Setup
+
+The project uses environment variables for configuration. Both frontend and backend have their own `.env` files:
+
+#### Frontend (.env)
+
+```env
+# API Configuration
+VITE_API_URL=http://localhost:8000/api/v1
+
+# Feature Flags (true/false)
+VITE_ENABLE_CODE_QUALITY=true
+VITE_ENABLE_DOCUMENTATION=true
+VITE_ENABLE_BEST_PRACTICES=true
+VITE_ENABLE_DEPENDENCY_GRAPH=true
+VITE_ENABLE_CHAT=true
+
+# UI Configuration
+VITE_MAX_CHAT_MESSAGES=100
+VITE_CODE_PREVIEW_MAX_LINES=50
+
+# Analysis Configuration
+VITE_ANALYSIS_POLL_INTERVAL=1000
+VITE_MAX_FILE_SIZE=5242880  # 5MB in bytes
+```
+
+#### Backend (.env)
+
+```env
+# Database Configuration
+DATABASE_URL=sqlite+aiosqlite:///./data/repo_analyzer.db
+
+# Backend Server Configuration
+HOST=0.0.0.0
+PORT=8000
+DEBUG=True
+LOG_LEVEL=DEBUG
+
+# Directory Configuration
+VECTOR_STORE_DIR=vector_store
+REPOS_DIR=repos
+OUTPUT_DIR=outputs
+```
+
+Copy the contents from `.env.example` to `.env` in both frontend and backend directories and adjust values as needed.
+
 ### Component Structure
 
 ```
@@ -66,6 +118,21 @@ backend/
 └── data/              # Database and file storage
     └── repo_analyzer.db   # SQLite database
 ```
+
+#### Frontend Components
+
+- `App.tsx`: Main application component with routing and providers
+  - `ThemeProvider`: Manages application theme
+  - `ToastProvider`: Handles notification system
+  - `ErrorBoundary`: Catches and handles React errors
+  - `AppShell`: Main layout component
+    - `Header`: Navigation and branding
+    - `RepositoryInput`: Repository URL input and validation
+    - `AnalysisView`: Shows analysis results
+      - `CodeQualityView`: Code quality metrics
+      - `DocumentationView`: Documentation analysis
+      - `BestPracticesView`: Best practices evaluation
+      - `DependencyGraph`: Package dependencies visualization
 
 ### Database Schema
 

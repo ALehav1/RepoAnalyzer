@@ -1,17 +1,19 @@
-import { StrictMode } from 'react';
+import React from 'react';
 import { createRoot } from 'react-dom/client';
-import '@mantine/core/styles.css';
-import '@mantine/notifications/styles.css';
+import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import { App } from './App';
 
-const root = document.getElementById('root');
-if (!root) {
-  throw new Error('Root element not found');
+const container = document.getElementById('root');
+if (!container) {
+  throw new Error('Failed to find root element');
 }
 
-createRoot(root).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
+const root = createRoot(container);
+root.render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>
 );
