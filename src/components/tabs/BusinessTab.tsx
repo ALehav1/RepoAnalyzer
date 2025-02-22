@@ -11,7 +11,7 @@ export const BusinessTab: React.FC<BusinessTabProps> = ({ objectives, patterns }
   return (
     <div className="space-y-6 p-6">
       <h2 className="text-xl font-bold mb-4">Business Objectives</h2>
-      <div className="space-y-4">
+      <div className="space-y-4 p-6">
         {objectives.map(objective => (
           <Card key={objective.id}>
             <CardHeader>
@@ -21,7 +21,7 @@ export const BusinessTab: React.FC<BusinessTabProps> = ({ objectives, patterns }
               <p className="text-gray-600 mt-1">{objective.description}</p>
 
               {/* Related Patterns */}
-              <div className="mt-3">
+              <div className="mt-3 p-6">
                 <h4 className="text-sm font-medium text-gray-700">Related Patterns:</h4>
                 <div className="mt-2 space-y-2">
                   {objective.relatedPatterns.map(patternId => {
@@ -39,7 +39,7 @@ export const BusinessTab: React.FC<BusinessTabProps> = ({ objectives, patterns }
 
               {/* AI Findings */}
               {objective.aiFindings && objective.aiFindings.length > 0 && (
-                <div className="mt-4">
+                <div className="mt-4 p-6">
                   <h4 className="text-sm font-medium text-gray-700">AI Findings:</h4>
                   <div className="mt-2 space-y-3">
                     {objective.aiFindings.map(finding => (

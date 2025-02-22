@@ -11,7 +11,7 @@ export const UseCasesTab: React.FC<UseCasesTabProps> = ({ useCases }) => {
     <div className="space-y-6 p-6">
       <h2 className="text-xl font-bold text-gray-900">AI Use Cases</h2>
       
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-6 p-6">
         {useCases.map(useCase => (
           <Card key={useCase.id}>
             <CardHeader>

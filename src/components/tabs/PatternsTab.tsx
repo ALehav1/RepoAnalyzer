@@ -27,7 +27,7 @@ export const PatternsTab: React.FC<PatternsTabProps> = ({ patterns }) => {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between p-6">
         <h2 className="text-xl font-bold text-gray-900">Implementation Patterns</h2>
         <span className="text-sm text-gray-500">
           {filteredPatterns.length} pattern{filteredPatterns.length !== 1 ? 's' : ''} found
@@ -35,7 +35,7 @@ export const PatternsTab: React.FC<PatternsTabProps> = ({ patterns }) => {
       </div>
 
       {/* Search & Filter */}
-      <div className="space-y-4">
+      <div className="space-y-4 p-6">
         <div>
           <input
             type="text"
@@ -75,7 +75,7 @@ export const PatternsTab: React.FC<PatternsTabProps> = ({ patterns }) => {
       </div>
 
       {/* Pattern List */}
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-6 p-6">
         {filteredPatterns.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             No patterns found matching your criteria.

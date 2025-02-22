@@ -25,7 +25,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({ analysis, metadata }) =>
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between p-6">
         <h2 className="text-xl font-bold text-gray-900">Save to Library</h2>
         {metadata && (
           <span className="text-sm text-gray-500">
@@ -34,12 +34,12 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({ analysis, metadata }) =>
         )}
       </div>
 
-      <Card>
+      <Card className="p-6">
         <CardHeader>
           <CardTitle>Library Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-4 p-6">
             {/* Collections */}
             <div>
               <label className="block text-sm font-medium text-gray-700">Collections</label>
@@ -93,12 +93,12 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({ analysis, metadata }) =>
       </Card>
 
       {/* Summary */}
-      <Card>
+      <Card className="p-6">
         <CardHeader>
           <CardTitle>Repository Summary</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-4 p-6">
             <div>
               <h3 className="text-sm font-medium text-gray-900">Key Features</h3>
               <ul className="mt-2 space-y-1">
@@ -136,7 +136,7 @@ export const LibraryTab: React.FC<LibraryTabProps> = ({ analysis, metadata }) =>
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
+      <div className="flex justify-end p-6">
         <button
           onClick={handleSave}
           className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
